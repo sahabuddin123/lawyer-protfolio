@@ -39,6 +39,14 @@ The platform pairs a high-performance **React + TypeScript + Vite** frontend wit
   - [6. Running the Development Servers](#6-running-the-development-servers)
 - [API Architecture & Endpoints](#api-architecture--endpoints)
 - [Bilingual Architecture (English & Bangla)](#bilingual-architecture-english--bangla)
+- [High-Performance Redis Caching Architecture](#high-performance-redis-caching-architecture)
+  - [Overview & Architecture](#overview--architecture)
+  - [Cache Invalidation & Atomic Versioning](#cache-invalidation--atomic-versioning)
+  - [TTL Policy Matrix](#ttl-policy-matrix)
+  - [Safe Diagnostic Verification (`redis:verify`)](#safe-diagnostic-verification-redisverify)
+  - [Local Development Setup (Windows / Docker / WSL2)](#local-development-setup-windows--docker--wsl2)
+  - [Production VPS Setup Guide (Hostinger / aaPanel / Ubuntu 24.04)](#production-vps-setup-guide-hostinger--aapanel--ubuntu-2404)
+  - [Graceful Fallback & Instant Rollback](#graceful-fallback--instant-rollback)
 - [Testing & Quality Assurance](#testing--quality-assurance)
 - [Production Deployment Architecture](#production-deployment-architecture)
   - [Server Environment](#server-environment)
@@ -476,6 +484,284 @@ The application supports native bilingual representation throughout the stack:
 
 ---
 
+## High-Performance Redis Caching Architecture
+
+The platform integrates an in-memory **Redis** caching tier designed to deliver sub-millisecond response times for public visitors across both English and Bangla locales, while strictly protecting private administrative endpoints and client communications.
+
+### Overview & Architecture
+
+* **Engine:** In-memory key-value store (Redis 7.x) via the high-performance PHP extension `phpredis`.
+* **Database Isolation:**
+  * **Database Index 0 (`REDIS_DB=0`):** Reserved for general application operations and default connection.
+  * **Database Index 1 (`REDIS_CACHE_DB=1`):** Dedicated exclusively to the application cache layer.
+* **Key Prefixing:** All cache entries are namespaced with `CACHE_PREFIX` (e.g., `nijam_prod_cache_` or `nijam_`) to avoid cross-application collision.
+* **Bilingual Locale Separation:** English (`en`) and Bangla (`bn`) payloads are stored under independent keys (e.g., `cms:settings:public:v1:en` vs `cms:settings:public:v1:bn`).
+* **Strict Privacy Isolation:**
+  * **Public Endpoints Cached:** Settings, navigation menus, homepage payload, lawyer profile/credentials/timeline, practice areas, courtroom experience, research papers, judgment reviews, publications, media appearances, videos, gallery albums, and XML sitemaps.
+  * **Never Cached:** Administrative endpoints (`/api/v1/admin/*`), authentication tokens, user sessions, client inquiries (`/api/v1/contact`), consultation requests (`/api/v1/consultations`), or confidential legal briefs.
+
+---
+
+### Cache Invalidation & Atomic Versioning
+
+Rather than issuing dangerous full-server flushes (`flushall` or `flushdb`) or relying on cache drivers that lack tag support, the platform implements an **Atomic Versioned Namespace** pattern in `App\Services\CmsCacheService`:
+
+1. **Version Counters:** Each module namespace maintains an atomic version integer stored in cache (e.g., `cms:version:practice_areas`).
+2. **List Key Permutations:** Listing queries incorporate the active version and an MD5 hash of sorting/filter/pagination parameters:
+   ```
+   cms:practice_areas:list:v{version}:{locale}:p{page}:s{searchHash}:f{featured}
+   ```
+3. **Instant Targeted Invalidation:** When an administrator creates, updates, reorders, or deletes an item in the CMS:
+   * `CmsCacheService::bumpVersion($module)` atomically increments the module version counter.
+   * All previous query, filter, and pagination permutations are instantly bypassed and garbage-collected upon TTL expiry.
+   * Direct detail records (`cms:{module}:detail:{slug}:{locale}`) are explicitly forgotten.
+   * No unrelated application cache entries or Redis databases are disturbed.
+
+---
+
+### TTL Policy Matrix
+
+All cached resources operate under explicit, content-aware Time-To-Live (TTL) limits:
+
+| Resource Type | Cache TTL | Implementation Constant | Rationale |
+|---|---|---|---|
+| **Chamber Settings** | 30 minutes | `CmsCacheService::TTL_SETTINGS = 1800` | Global settings, phone numbers, chamber addresses change infrequently |
+| **Navigation & Menus** | 30 minutes | `CmsCacheService::TTL_NAVIGATION = 1800` | Header, footer, and legal menu hierarchies |
+| **CMS Pages** | 30 minutes | `CmsCacheService::TTL_PAGE = 1800` | Static policy pages (Terms, Privacy, Disclaimers) |
+| **Contact Configurations** | 30 minutes | `CmsCacheService::TTL_CONTACT = 1800` | Office hours, consultation preferences |
+| **Lawyer Profile & Pedigree** | 15 minutes | `CmsCacheService::TTL_PROFILE = 900` | Biography, credentials, bar memberships, milestone timeline |
+| **Practice Areas** | 15 minutes | `CmsCacheService::TTL_PRACTICE_AREAS = 900` | Core practice domain listings and practice detail pages |
+| **Homepage Aggregation** | 10 minutes | `CmsCacheService::TTL_HOME = 600` | Aggregated hero, stats, and featured sections |
+| **Litigation & Case Archive** | 10 minutes | `CmsCacheService::TTL_COURTROOM = 600` | Case experiences and milestone courtroom matters |
+| **Research Monographs** | 10 minutes | `CmsCacheService::TTL_RESEARCH = 600` | Academic legal papers and monographs |
+| **Judgment Commentary** | 10 minutes | `CmsCacheService::TTL_JUDGMENTS = 600` | Supreme Court judgment reviews and bench analysis |
+| **Publications & Articles** | 10 minutes | `CmsCacheService::TTL_PUBLICATIONS = 600` | Press articles, legal columns, and journal entries |
+| **Media, Press & Videos** | 10 minutes | `CmsCacheService::TTL_MEDIA / TTL_VIDEOS = 600` | Broadcast interviews, videos, and press mentions |
+| **Photo Gallery Albums** | 10 minutes | `CmsCacheService::TTL_GALLERY = 600` | Chamber events and ceremonial photo albums |
+| **XML Sitemap** | 24 hours | `CmsCacheService::TTL_SITEMAP = 86400` | Search engine crawl map (`/api/v1/sitemap.xml`) |
+
+---
+
+### Safe Diagnostic Verification (`redis:verify`)
+
+The backend includes a dedicated, non-destructive Artisan verification command:
+
+```bash
+cd backend
+php artisan redis:verify
+```
+
+#### Diagnostic Capabilities:
+1. **Configuration Inspection:** Reports active `CACHE_STORE`, target connection, client driver, host:port, and DB index without printing credentials or exposing passwords.
+2. **Runtime Driver Verification:** Validates that the active PHP runtime has loaded `phpredis` (or `predis/predis`).
+3. **Safe Ping:** Issues a non-destructive `PING` probe against the target Redis connection.
+4. **Isolated Read/Write/Delete Probe:** Writes an ephemeral test key with a 60-second TTL (`diag_verify_<random>`), reads and asserts value integrity, and immediately deletes the key.
+5. **Cache Facade Verification:** Optionally tests the Laravel `Cache::store('redis')` store (`php artisan redis:verify --store`).
+
+---
+
+### Local Development Setup (Windows / Docker / WSL2)
+
+In local development (e.g. Windows with WAMP), Redis is **not required**. The application defaults smoothly to `CACHE_STORE=file` or `CACHE_STORE=database`.
+
+If you wish to run Redis locally for parity testing:
+
+#### Option A: Docker (Recommended for Windows / Mac)
+Run a lightweight Redis 7 container:
+
+```bash
+docker run -d --name nijam-redis -p 6379:6379 redis:7-alpine
+```
+
+Verify reachability:
+```bash
+docker exec -it nijam-redis redis-cli ping
+# Expected: PONG
+```
+
+#### Option B: WSL2 (Ubuntu on Windows)
+```bash
+sudo apt update && sudo apt install -y redis-server
+sudo service redis-server start
+redis-cli ping
+# Expected: PONG
+```
+
+#### Local Laravel Configuration (`backend/.env`):
+```ini
+CACHE_STORE=redis
+REDIS_CLIENT=phpredis
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=null
+REDIS_DB=0
+REDIS_CACHE_DB=1
+CACHE_PREFIX=nijam_dev_cache_
+```
+
+> **Note on Windows PHP Extensions:**  
+> If using native Windows PHP without the `php_redis.dll` extension, keep `CACHE_STORE=file` in your local `.env`. All automated tests and CMS features function identically on file and database stores.
+
+---
+
+### Production VPS Setup Guide (Hostinger / aaPanel / Ubuntu 24.04)
+
+Follow these verified steps on the Hostinger VPS to install and configure Redis for production:
+
+#### 1. Verify Host System & Package Availability
+SSH into the VPS and inspect the environment:
+
+```bash
+lsb_release -a
+# Expected: Ubuntu 24.04 LTS
+```
+
+#### 2. Install Redis Server
+```bash
+sudo apt update
+sudo apt install -y redis-server
+```
+
+#### 3. Secure & Harden Redis Configuration
+Open `/etc/redis/redis.conf`:
+
+```bash
+sudo nano /etc/redis/redis.conf
+```
+
+Verify and enforce the following security parameters:
+```conf
+# 1. Bind strictly to localhost (NEVER expose to public internet)
+bind 127.0.0.1 ::1
+
+# 2. Enforce protected mode
+protected-mode yes
+
+# 3. Specify standard port
+port 6379
+
+# 4. Require strong authentication password (generate a 32+ character random string)
+requirepass YOUR_STRONG_REDIS_PASSWORD_HERE
+
+# 5. Set maximum memory policy for caching (e.g., 256MB)
+maxmemory 256mb
+maxmemory-policy allkeys-lru
+```
+
+#### 4. Firewall Hardening
+Ensure port 6379 is blocked from external access:
+```bash
+sudo ufw status
+# Port 6379 MUST NOT appear in the open external rules list
+```
+
+#### 5. Start and Enable Redis Systemd Service
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable redis-server
+sudo systemctl restart redis-server
+sudo systemctl status redis-server
+```
+
+Verify local response:
+```bash
+redis-cli -a YOUR_STRONG_REDIS_PASSWORD_HERE ping
+# Expected: PONG
+```
+
+#### 6. Enable PHP Redis Extension in aaPanel
+The live website uses PHP 8.2 (`enable-php-82.conf`).
+
+1. Log in to the **aaPanel Web Dashboard** (`https://<vps-ip>:8888`).
+2. Navigate to **App Store** -> **Installed**.
+3. Locate **PHP 8.2** and click **Settings**.
+4. Click on **Install Extensions**.
+5. Find **redis** in the list and click **Install**.
+6. Once installation completes, verify via SSH:
+   ```bash
+   /www/server/php/82/bin/php -m | grep -i redis
+   # Expected output: redis
+   ```
+7. Reload PHP-FPM in aaPanel or via command line:
+   ```bash
+   sudo systemctl reload php8.2-fpm
+   ```
+
+#### 7. Configure Production Environment (`shared/.env`)
+In `/www/wwwroot/nijamuddin-deploy/shared/.env`, configure:
+
+```ini
+CACHE_STORE=redis
+REDIS_CLIENT=phpredis
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=YOUR_STRONG_REDIS_PASSWORD_HERE
+REDIS_DB=0
+REDIS_CACHE_DB=1
+REDIS_TIMEOUT=2.0
+REDIS_READ_TIMEOUT=2.0
+CACHE_PREFIX=nijam_prod_cache_
+```
+
+#### 8. Verify Connection & Cache Configuration
+Run the non-destructive verification tool:
+
+```bash
+cd /www/wwwroot/nijamuddin-deploy/current/backend
+php artisan redis:verify --store
+```
+
+Expected output:
+```
+==================================================================
+Advocate Nijam Uddin CMS — Redis Diagnostic & Connectivity Check
+==================================================================
++-------------------------+-------------------+
+| Configuration Item      | Configured Value  |
++-------------------------+-------------------+
+| Active CACHE_STORE      | redis             |
+| Target Redis Connection | cache             |
+| Redis Client Driver     | phpredis          |
+| Redis Host:Port         | 127.0.0.1:6379    |
+| Redis Database Index    | 1                 |
+| Password Configured     | Yes (protected)   |
+| Cache Key Prefix        | nijam_prod_cache_ |
++-------------------------+-------------------+
+
+[1/4] Checking PHP Redis Client Extension...
+  PASS: phpredis extension is active.
+[2/4] Testing Redis Ping on connection 'cache'...
+  PASS: Ping response received: PONG
+[3/4] Performing Non-Destructive Key Write/Read/Delete...
+  PASS: Test key successfully written, verified, and cleaned up.
+[4/4] Verifying Laravel Cache Facade integration...
+  PASS: Cache::store('redis') successfully stored, retrieved, and invalidated items.
+==================================================================
+STATUS: Redis connectivity & operations verified successfully!
+==================================================================
+```
+
+---
+
+### Graceful Fallback & Instant Rollback
+
+If the Redis daemon requires maintenance, or if you need to bypass Redis at any point:
+
+1. Open `/www/wwwroot/nijamuddin-deploy/shared/.env`:
+   ```ini
+   # Temporarily switch to file or database cache
+   CACHE_STORE=file
+   ```
+2. Re-cache the configuration:
+   ```bash
+   cd /www/wwwroot/nijamuddin-deploy/current/backend
+   php artisan config:clear
+   php artisan config:cache
+   ```
+3. The application will instantly transition to file caching without throwing errors, dropping database queries, or disrupting visitors.
+
+---
+
 ## Testing & Quality Assurance
 
 The codebase enforces strict test coverage across authentication, authorization, CMS workflows, data sanitization, and security.
@@ -487,12 +773,13 @@ cd backend
 php artisan test
 ```
 
-* **Current Test Suite Status:** **316 tests passed (1,755 assertions)**, 0 failures.
+* **Current Test Suite Status:** **322 tests passed (1,790 assertions)**, 1 skipped (real Redis integration test gracefully skipped when local phpredis is absent), 0 failures.
 * **Test Suites Covered:**
   * `Tests\Feature\Auth`: Sanctum token lifecycle, login/logout, rate limiting, and password hashing.
   * `Tests\Feature\Auth\SuperAdminProvisioningTest`: Admin CLI provisioning, seeder idempotency, production guards, and overwrite prevention.
   * `Tests\Feature\Security`: OWASP headers, CORS origin verification, SQL injection immunity, XSS sanitization, mass assignment protection, and IDOR access barriers.
   * `Tests\Feature\Cms`: Homepage section sequencing, menu tree nesting, and 301 redirection integrity.
+  * `Tests\Feature\Cms\RedisCacheIntegrationTest`: Versioned cache key permutations, Bangla/English locale separation, atomic namespace invalidation, TTL constant policy verification, safe CLI diagnostic execution, and real Redis integration.
   * Domain modules: Practice areas, courtroom cases, research papers, judgment reviews, publications, media, videos, and profile credentials.
 
 ### Running Frontend Typechecks & Production Build
