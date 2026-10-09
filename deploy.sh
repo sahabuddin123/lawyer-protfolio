@@ -69,7 +69,16 @@ log_err() {
 acquire_lock() {
     if [[ -f "${LOCK_FILE}" ]]; then
         local pid
-        pid=$(cat "${LOCK_FILE}" 2>/dev/null || echo "unknown")
+        pid=$(cat "${LOCK_FILE}" 2>/dev/null || echo "")
+        # If the current process already owns the lock, proceed
+        if [[ -n "${pid}" && "${pid}" == "$$" ]]; then
+            return 0
+        fi
+        # If the locking PID is no longer running, reclaim the stale lock
+        if [[ -n "${pid}" ]] && ! kill -0 "${pid}" 2>/dev/null; then
+            echo "$$" > "${LOCK_FILE}"
+            return 0
+        fi
         log_err "Deployment lock exists at ${LOCK_FILE} (PID: ${pid}). Another deployment is in progress."
         exit 1
     fi
