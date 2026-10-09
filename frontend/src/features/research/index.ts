@@ -1,0 +1,1 @@
+export { ResearchManager } from './ResearchManager';

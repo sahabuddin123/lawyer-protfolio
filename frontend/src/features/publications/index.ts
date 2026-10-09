@@ -1,0 +1,1 @@
+export { PublicationManager } from './PublicationManager';

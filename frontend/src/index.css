@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Surface & Background Hierarchy */
+  --bg-primary: #111111;
+  --bg-secondary: #181818;
+  --bg-surface: #1E1E1E;
+  --bg-surface-elevated: #242424;
+  --bg-surface-hover: #2A2A2A;
+
+  /* Judicial Gold Accent Spectrum */
+  --gold-primary: #D4A017;
+  --gold-secondary: #C59B27;
+  --gold-hover: #E5B22D;
+  --gold-subtle: rgba(212, 160, 23, 0.12);
+  --gold-border: rgba(212, 160, 23, 0.28);
+  --gold-glow: rgba(212, 160, 23, 0.20);
+
+  /* High-Contrast Typographic Colors */
+  --text-primary: #F5F5F5;
+  --text-secondary: #D4D4D4;
+  --text-muted: #A6A6A6;
+  --text-subtle: #737373;
+  --text-accent: #D4A017;
+
+  /* Architectural Hairlines & Dividers */
+  --border-subtle: #2B2B2B;
+  --border-medium: #383838;
+  --border-focus: #D4A017;
+
+  /* Fonts */
+  --font-cinzel: 'Cinzel', 'Playfair Display', serif;
+  --font-playfair: 'Playfair Display', Georgia, serif;
+  --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-bengali: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
+}
+
+/* Base Body Styles */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-inter);
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dual-Script Typography Engine */
+[lang="bn"] {
+  font-family: var(--font-bengali);
+}
+
+[lang="bn"] body,
+[lang="bn"] p,
+[lang="bn"] span,
+[lang="bn"] div,
+[lang="bn"] a,
+[lang="bn"] button,
+[lang="bn"] input,
+[lang="bn"] textarea,
+[lang="bn"] select {
+  font-family: var(--font-bengali);
+  line-height: 1.75;
+}
+
+[lang="bn"] h1,
+[lang="bn"] h2,
+[lang="bn"] h3,
+[lang="bn"] h4,
+[lang="bn"] h5,
+[lang="bn"] h6 {
+  font-family: var(--font-bengali);
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+
+/* Custom Editorial Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111111;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2B2B2B;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #D4A017;
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Utility Classes for Typography */
+@layer utilities {
+  .font-display {
+    font-family: var(--font-cinzel);
+    letter-spacing: -0.02em;
+  }
+
+  .font-editorial {
+    font-family: var(--font-playfair);
+  }
+
+  .font-body {
+    font-family: var(--font-inter);
+  }
+
+  .gold-gradient-text {
+    background: linear-gradient(135deg, #F5F5F5 0%, #D4A017 60%, #C59B27 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .gold-divider-glow {
+    background: linear-gradient(90deg, transparent 0%, #D4A017 50%, transparent 100%);
+  }
+}
