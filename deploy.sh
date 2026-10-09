@@ -158,6 +158,27 @@ cmd_check() {
         else
             log_warn "Database connectivity check failed or migrations table uninitialized."
         fi
+
+        # 8. Check Redis configuration if CACHE_STORE=redis
+        local cache_store
+        cache_store=$(grep -E '^CACHE_STORE=' "${SHARED_DIR}/.env" 2>/dev/null | cut -d '=' -f 2 | tr -d ' "' || echo "")
+        if [[ "${cache_store}" == "redis" ]]; then
+            log "Verifying Redis configuration (CACHE_STORE=redis)..."
+            if php -m | grep -qi "^redis$"; then
+                log_success "PHP extension 'redis' (phpredis) is loaded."
+            else
+                log_warn "PHP extension 'redis' is NOT loaded in CLI PHP, but CACHE_STORE=redis is set."
+            fi
+            if command -v redis-cli >/dev/null 2>&1; then
+                if redis-cli ping >/dev/null 2>&1; then
+                    log_success "Redis server is reachable via redis-cli ping (PONG)."
+                else
+                    log_warn "Redis server did not respond to redis-cli ping."
+                fi
+            else
+                log_info "redis-cli not installed; check Redis service via 'systemctl status redis-server'."
+            fi
+        fi
     fi
 
     log_success "Environment check completed successfully."
@@ -295,8 +316,12 @@ cmd_deploy() {
         cd "${NEW_RELEASE_DIR}/backend"
         php artisan config:cache
         php artisan route:cache
-        php artisan view:cache
         php artisan event:cache
+
+        if grep -q "CACHE_STORE=redis" "${SHARED_DIR}/.env" 2>/dev/null; then
+            log "Verifying Redis cache connectivity..."
+            php artisan redis:verify || log_warn "Redis verification failed. Ensure Redis service is running."
+        fi
     )
 
     # 8. Atomically switch current release symlink

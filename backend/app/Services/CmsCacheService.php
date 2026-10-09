@@ -6,37 +6,102 @@ use Illuminate\Support\Facades\Cache;
 
 class CmsCacheService
 {
-    public const TTL_SETTINGS = 86400; // 24 hours
-    public const TTL_NAVIGATION = 86400;
-    public const TTL_HOME = 3600; // 1 hour
-    public const TTL_PAGE = 86400;
-    public const TTL_PROFILE = 86400;
-    public const TTL_PRACTICE_AREAS = 86400;
-    public const TTL_COURTROOM = 86400;
-    public const TTL_RESEARCH = 86400;
-    public const TTL_JUDGMENTS = 86400;
-    public const TTL_PUBLICATIONS = 86400;
-    public const TTL_MEDIA = 86400;
-    public const TTL_VIDEOS = 86400;
-    public const TTL_GALLERY = 86400;
-    public const TTL_CONTACT = 86400;
+    /**
+     * Cache Time-To-Live Policies (in seconds)
+     * 
+     * - Site Settings & Navigation: 30 minutes
+     * - Lawyer Profile & Practice Areas: 15 minutes
+     * - Public Content Listings & Details: 10 minutes
+     * - Homepage Aggregates: 10 minutes
+     * - Static CMS Pages: 30 minutes
+     * - Technical Sitemap: 24 hours
+     */
+    public const TTL_SETTINGS = 1800;       // 30 minutes
+    public const TTL_NAVIGATION = 1800;     // 30 minutes
+    public const TTL_HOME = 600;            // 10 minutes
+    public const TTL_PAGE = 1800;           // 30 minutes
+    public const TTL_PROFILE = 900;         // 15 minutes
+    public const TTL_PRACTICE_AREAS = 900;  // 15 minutes
+    public const TTL_COURTROOM = 600;       // 10 minutes
+    public const TTL_RESEARCH = 600;        // 10 minutes
+    public const TTL_JUDGMENTS = 600;       // 10 minutes
+    public const TTL_PUBLICATIONS = 600;    // 10 minutes
+    public const TTL_MEDIA = 600;           // 10 minutes
+    public const TTL_VIDEOS = 600;          // 10 minutes
+    public const TTL_GALLERY = 600;         // 10 minutes
+    public const TTL_CONTACT = 1800;        // 30 minutes
+    public const TTL_SITEMAP = 86400;       // 24 hours
+
+    /**
+     * Get the current cache generation version for a given module namespace.
+     * Works across all cache stores (Redis, database, file, array).
+     */
+    public static function version(string $module): int
+    {
+        return (int) Cache::get("cms:version:{$module}", 1);
+    }
+
+    /**
+     * Increment the generation version for a module namespace.
+     * This instantly and atomically invalidates all associated list query permutations.
+     */
+    public static function bumpVersion(string $module): int
+    {
+        $current = static::version($module);
+        $next = $current + 1;
+        Cache::forever("cms:version:{$module}", $next);
+        return $next;
+    }
+
+    /**
+     * Generic versioned list key generator.
+     */
+    public static function listKey(string $module, string $locale, array $params = []): string
+    {
+        $v = static::version($module);
+        ksort($params);
+        $paramHash = empty($params) ? 'default' : md5((string) json_encode($params));
+        return "cms:{$module}:list:v{$v}:{$locale}:{$paramHash}";
+    }
+
+    /**
+     * Generic detail key generator.
+     */
+    public static function detailKey(string $module, string $slug, string $locale): string
+    {
+        return "cms:{$module}:detail:{$slug}:{$locale}";
+    }
+
+    /**
+     * Generic detail cache invalidator.
+     */
+    public static function forgetDetail(string $module, string $slug, ?string $locale = null): void
+    {
+        $locales = $locale ? [$locale] : (array) config('app.supported_locales', ['en', 'bn']);
+        foreach ($locales as $loc) {
+            Cache::forget(static::detailKey($module, $slug, $loc));
+        }
+    }
 
     /**
      * Cache key generators
      */
     public static function settingsKey(string $locale): string
     {
-        return "cms:settings:public:{$locale}";
+        $v = static::version('settings');
+        return "cms:settings:public:v{$v}:{$locale}";
     }
 
     public static function navigationKey(string $locale): string
     {
-        return "cms:navigation:public:{$locale}";
+        $v = static::version('navigation');
+        return "cms:navigation:public:v{$v}:{$locale}";
     }
 
     public static function homeKey(string $locale): string
     {
-        return "cms:home:public:{$locale}";
+        $v = static::version('home');
+        return "cms:home:public:v{$v}:{$locale}";
     }
 
     public static function pageKey(string $slug, string $locale): string
@@ -46,7 +111,8 @@ class CmsCacheService
 
     public static function profileKey(string $locale): string
     {
-        return "cms:profile:public:{$locale}";
+        $v = static::version('profile');
+        return "cms:profile:public:v{$v}:{$locale}";
     }
 
     public static function credentialsKey(string $locale): string
@@ -61,9 +127,10 @@ class CmsCacheService
 
     public static function practiceAreasListKey(string $locale, int $page = 1, ?string $search = null, ?bool $featured = null): string
     {
+        $v = static::version('practice_areas');
         $searchHash = $search ? md5(trim($search)) : 'all';
         $featStr = $featured === null ? 'all' : ($featured ? '1' : '0');
-        return "cms:practice_areas:list:{$locale}:p{$page}:s{$searchHash}:f{$featStr}";
+        return "cms:practice_areas:list:v{$v}:{$locale}:p{$page}:s{$searchHash}:f{$featStr}";
     }
 
     public static function practiceAreaDetailKey(string $slug, string $locale): string
@@ -74,8 +141,9 @@ class CmsCacheService
     public static function courtroomListKey(string $locale, int $page = 1, array $filters = []): string
     {
         ksort($filters);
+        $v = static::version('courtroom');
         $filterHash = !empty($filters) ? md5(http_build_query($filters)) : 'default';
-        return "cms:courtroom:list:{$locale}:p{$page}:f{$filterHash}";
+        return "cms:courtroom:list:v{$v}:{$locale}:p{$page}:f{$filterHash}";
     }
 
     public static function courtroomDetailKey(string $slug, string $locale): string
@@ -86,8 +154,9 @@ class CmsCacheService
     public static function researchListKey(string $locale, int $page = 1, array $filters = []): string
     {
         ksort($filters);
+        $v = static::version('research');
         $filterHash = !empty($filters) ? md5(http_build_query($filters)) : 'default';
-        return "cms:research:list:{$locale}:p{$page}:f{$filterHash}";
+        return "cms:research:list:v{$v}:{$locale}:p{$page}:f{$filterHash}";
     }
 
     public static function researchDetailKey(string $slug, string $locale): string
@@ -98,8 +167,9 @@ class CmsCacheService
     public static function judgmentListKey(string $locale, int $page = 1, array $filters = []): string
     {
         ksort($filters);
+        $v = static::version('judgments');
         $filterHash = !empty($filters) ? md5(http_build_query($filters)) : 'default';
-        return "cms:judgments:list:{$locale}:p{$page}:f{$filterHash}";
+        return "cms:judgments:list:v{$v}:{$locale}:p{$page}:f{$filterHash}";
     }
 
     public static function judgmentDetailKey(string $slug, string $locale): string
@@ -110,8 +180,9 @@ class CmsCacheService
     public static function publicationListKey(string $locale, int $page = 1, array $filters = []): string
     {
         ksort($filters);
+        $v = static::version('publications');
         $filterHash = !empty($filters) ? md5(http_build_query($filters)) : 'default';
-        return "cms:publications:list:{$locale}:p{$page}:f{$filterHash}";
+        return "cms:publications:list:v{$v}:{$locale}:p{$page}:f{$filterHash}";
     }
 
     public static function publicationDetailKey(string $slug, string $locale): string
@@ -122,8 +193,9 @@ class CmsCacheService
     public static function mediaPressListKey(string $locale, int $page = 1, array $filters = []): string
     {
         ksort($filters);
+        $v = static::version('media_press');
         $filterHash = !empty($filters) ? md5(http_build_query($filters)) : 'default';
-        return "cms:media_press:list:{$locale}:p{$page}:f{$filterHash}";
+        return "cms:media_press:list:v{$v}:{$locale}:p{$page}:f{$filterHash}";
     }
 
     public static function mediaPressDetailKey(string $slug, string $locale): string
@@ -134,13 +206,50 @@ class CmsCacheService
     public static function mediaAppearancesListKey(string $locale, int $page = 1, array $filters = []): string
     {
         ksort($filters);
+        $v = static::version('media_appearances');
         $filterHash = !empty($filters) ? md5(http_build_query($filters)) : 'default';
-        return "cms:media_appearances:list:{$locale}:p{$page}:f{$filterHash}";
+        return "cms:media_appearances:list:v{$v}:{$locale}:p{$page}:f{$filterHash}";
     }
 
     public static function mediaAppearancesDetailKey(string $slug, string $locale): string
     {
         return "cms:media_appearances:detail:{$slug}:{$locale}";
+    }
+
+    public static function videoListKey(string $locale, int $page = 1, array $filters = []): string
+    {
+        ksort($filters);
+        $v = static::version('videos');
+        $filterHash = !empty($filters) ? md5(http_build_query($filters)) : 'default';
+        return "cms:videos:list:v{$v}:{$locale}:p{$page}:f{$filterHash}";
+    }
+
+    public static function videoDetailKey(string $slug, string $locale): string
+    {
+        return "cms:videos:detail:{$slug}:{$locale}";
+    }
+
+    public static function galleryListKey(string $locale, int $page = 1, array $filters = []): string
+    {
+        ksort($filters);
+        $v = static::version('gallery');
+        $filterHash = !empty($filters) ? md5(http_build_query($filters)) : 'default';
+        return "cms:gallery:list:v{$v}:{$locale}:p{$page}:f{$filterHash}";
+    }
+
+    public static function galleryDetailKey(string $slug, string $locale): string
+    {
+        return "cms:gallery:detail:{$slug}:{$locale}";
+    }
+
+    public static function contactConfigKey(string $locale): string
+    {
+        return "cms:contact:config:{$locale}";
+    }
+
+    public static function sitemapKey(): string
+    {
+        return 'cms:sitemap:xml';
     }
 
     /**
@@ -150,14 +259,15 @@ class CmsCacheService
     {
         Cache::forget(static::settingsKey('en'));
         Cache::forget(static::settingsKey('bn'));
-        Cache::forget(static::homeKey('en'));
-        Cache::forget(static::homeKey('bn'));
+        static::bumpVersion('settings');
+        static::forgetHome();
     }
 
     public static function forgetNavigation(): void
     {
         Cache::forget(static::navigationKey('en'));
         Cache::forget(static::navigationKey('bn'));
+        static::bumpVersion('navigation');
     }
 
     public static function forgetHome(): void
@@ -170,6 +280,7 @@ class CmsCacheService
     {
         Cache::forget(static::pageKey($slug, 'en'));
         Cache::forget(static::pageKey($slug, 'bn'));
+        static::bumpVersion('pages');
     }
 
     public static function forgetProfile(): void
@@ -180,6 +291,8 @@ class CmsCacheService
         Cache::forget(static::credentialsKey('bn'));
         Cache::forget(static::timelineKey('en'));
         Cache::forget(static::timelineKey('bn'));
+        static::bumpVersion('profile');
+        static::forgetHome();
     }
 
     public static function forgetPracticeAreas(?string $slug = null): void
@@ -189,6 +302,7 @@ class CmsCacheService
             Cache::forget(static::practiceAreaDetailKey($slug, 'bn'));
         }
 
+        static::bumpVersion('practice_areas');
         static::forgetHome();
 
         for ($p = 1; $p <= 10; $p++) {
@@ -206,9 +320,9 @@ class CmsCacheService
             Cache::forget(static::courtroomDetailKey($slug, 'bn'));
         }
 
+        static::bumpVersion('courtroom');
         static::forgetHome();
 
-        // Invalidate common courtroom pages
         for ($p = 1; $p <= 10; $p++) {
             Cache::forget("cms:courtroom:list:en:p{$p}:fdefault");
             Cache::forget("cms:courtroom:list:bn:p{$p}:fdefault");
@@ -222,9 +336,9 @@ class CmsCacheService
             Cache::forget(static::researchDetailKey($slug, 'bn'));
         }
 
+        static::bumpVersion('research');
         static::forgetHome();
 
-        // Invalidate common research pages
         for ($p = 1; $p <= 10; $p++) {
             Cache::forget("cms:research:list:en:p{$p}:fdefault");
             Cache::forget("cms:research:list:bn:p{$p}:fdefault");
@@ -238,9 +352,9 @@ class CmsCacheService
             Cache::forget(static::judgmentDetailKey($slug, 'bn'));
         }
 
+        static::bumpVersion('judgments');
         static::forgetHome();
 
-        // Invalidate common judgments pages
         for ($p = 1; $p <= 10; $p++) {
             Cache::forget("cms:judgments:list:en:p{$p}:fdefault");
             Cache::forget("cms:judgments:list:bn:p{$p}:fdefault");
@@ -254,9 +368,9 @@ class CmsCacheService
             Cache::forget(static::publicationDetailKey($slug, 'bn'));
         }
 
+        static::bumpVersion('publications');
         static::forgetHome();
 
-        // Invalidate common publications pages
         for ($p = 1; $p <= 10; $p++) {
             Cache::forget("cms:publications:list:en:p{$p}:fdefault");
             Cache::forget("cms:publications:list:bn:p{$p}:fdefault");
@@ -270,6 +384,7 @@ class CmsCacheService
             Cache::forget(static::mediaPressDetailKey($slug, 'bn'));
         }
 
+        static::bumpVersion('media_press');
         static::forgetHome();
 
         for ($p = 1; $p <= 10; $p++) {
@@ -285,6 +400,7 @@ class CmsCacheService
             Cache::forget(static::mediaAppearancesDetailKey($slug, 'bn'));
         }
 
+        static::bumpVersion('media_appearances');
         static::forgetHome();
 
         for ($p = 1; $p <= 10; $p++) {
@@ -299,18 +415,6 @@ class CmsCacheService
         static::forgetMediaAppearances($slug);
     }
 
-    public static function videoListKey(string $locale, int $page = 1, array $filters = []): string
-    {
-        ksort($filters);
-        $filterHash = !empty($filters) ? md5(http_build_query($filters)) : 'default';
-        return "cms:videos:list:{$locale}:p{$page}:f{$filterHash}";
-    }
-
-    public static function videoDetailKey(string $slug, string $locale): string
-    {
-        return "cms:videos:detail:{$slug}:{$locale}";
-    }
-
     public static function forgetVideos(?string $slug = null): void
     {
         if ($slug) {
@@ -318,24 +422,13 @@ class CmsCacheService
             Cache::forget(static::videoDetailKey($slug, 'bn'));
         }
 
+        static::bumpVersion('videos');
         static::forgetHome();
 
         for ($p = 1; $p <= 10; $p++) {
             Cache::forget("cms:videos:list:en:p{$p}:fdefault");
             Cache::forget("cms:videos:list:bn:p{$p}:fdefault");
         }
-    }
-
-    public static function galleryListKey(string $locale, int $page = 1, array $filters = []): string
-    {
-        ksort($filters);
-        $filterHash = !empty($filters) ? md5(http_build_query($filters)) : 'default';
-        return "cms:gallery:list:{$locale}:p{$page}:f{$filterHash}";
-    }
-
-    public static function galleryDetailKey(string $slug, string $locale): string
-    {
-        return "cms:gallery:detail:{$slug}:{$locale}";
     }
 
     public static function forgetGallery(?string $slug = null): void
@@ -345,6 +438,7 @@ class CmsCacheService
             Cache::forget(static::galleryDetailKey($slug, 'bn'));
         }
 
+        static::bumpVersion('gallery');
         static::forgetHome();
 
         for ($p = 1; $p <= 10; $p++) {
@@ -353,20 +447,11 @@ class CmsCacheService
         }
     }
 
-    public static function contactConfigKey(string $locale): string
-    {
-        return "cms:contact:config:{$locale}";
-    }
-
     public static function forgetContactConfig(): void
     {
         Cache::forget(static::contactConfigKey('en'));
         Cache::forget(static::contactConfigKey('bn'));
-    }
-
-    public static function sitemapKey(): string
-    {
-        return 'cms:sitemap:xml';
+        static::bumpVersion('contact');
     }
 
     public static function forgetSitemap(): void
@@ -392,5 +477,3 @@ class CmsCacheService
         static::forgetSitemap();
     }
 }
-
-
