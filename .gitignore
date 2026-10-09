@@ -28,7 +28,8 @@ dist/
 dist-ssr/
 public/build/
 public/hot/
-docs
+# Keep documentation local; do not upload to GitHub
+/docs/
 
 # Laravel runtime files
 /backend/storage/logs/*
