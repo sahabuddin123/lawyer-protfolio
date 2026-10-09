@@ -15,6 +15,10 @@ class PublicSettingsTest extends TestCase
     {
         parent::setUp();
         CmsCacheService::flushAll();
+
+        if (\App\Models\SiteSetting::count() === 0) {
+            $this->seed(\Database\Seeders\CmsAndSettingsSeeder::class);
+        }
     }
 
     public function test_public_settings_endpoint_returns_success_envelope(): void

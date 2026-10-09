@@ -29,7 +29,7 @@ class HtmlSanitizer
      * Dangerous URL schemes.
      */
     protected static array $disallowedSchemes = [
-        'javascript:', 'vbscript:', 'data:', 'file:'
+        'javascript:', 'vbscript:', 'data:', 'file:', 'about:'
     ];
 
     /**
@@ -41,20 +41,20 @@ class HtmlSanitizer
             return '';
         }
 
-        // 1. Remove dangerous script and iframe elements directly
+        // 1. Remove dangerous active elements directly
         $cleaned = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $html);
         $cleaned = preg_replace('#<style(.*?)>(.*?)</style>#is', '', $cleaned);
         $cleaned = preg_replace('#<iframe(.*?)>(.*?)</iframe>#is', '', $cleaned);
         $cleaned = preg_replace('#<object(.*?)>(.*?)</object>#is', '', $cleaned);
         $cleaned = preg_replace('#<embed(.*?)>(.*?)</embed>#is', '', $cleaned);
+        $cleaned = preg_replace('#<svg(.*?)>(.*?)</svg>#is', '', $cleaned);
+        $cleaned = preg_replace('#<form(.*?)>(.*?)</form>#is', '', $cleaned);
 
         // 2. Remove all on* event handler attributes (e.g., onclick, onerror, onload)
         $cleaned = preg_replace('#\s*on\w+\s*=\s*(".*?"|\'.*?\'|[^\'">\s]+)#is', '', $cleaned);
 
-        // 3. Remove javascript:/vbscript:/data: URL protocols inside attributes
-        foreach (static::$disallowedSchemes as $scheme) {
-            $cleaned = preg_replace('#(href|src)\s*=\s*["\']\s*' . preg_quote($scheme, '#') . '[^"\']*["\']#is', '$1="#"', $cleaned);
-        }
+        // 3. Remove javascript:/vbscript:/data:/about: URL protocols inside attributes
+        $cleaned = preg_replace('#(href|src)\s*=\s*["\']\s*(?:javascript|vbscript|data|file|about)\s*:[^"\']*["\']#is', '$1="#"', $cleaned);
 
         // 4. Strip tags not in whitelist
         $tagsString = '<' . implode('><', static::$allowedTags) . '>';
@@ -80,7 +80,7 @@ class HtmlSanitizer
     }
 
     /**
-     * Verify whether a URL protocol is safe.
+     * Verify whether a URL is strictly safe (preventing Open Redirects & XSS).
      */
     public static function isSafeUrl(?string $url): bool
     {
@@ -88,26 +88,40 @@ class HtmlSanitizer
             return true;
         }
 
+        // Reject strings containing control characters or null bytes
+        if (preg_match('/[\x00-\x1F\x7F]/', $url)) {
+            return false;
+        }
+
         $trimmed = strtolower(trim($url));
 
-        // Allow relative URLs starting with / or #
-        if (str_starts_with($trimmed, '/') || str_starts_with($trimmed, '#') || str_starts_with($trimmed, '?')) {
+        // Reject protocol-relative URLs (e.g., //evil.com, /\\evil.com) to prevent Open Redirects
+        if (str_starts_with($trimmed, '//') || str_starts_with($trimmed, '/\\') || str_starts_with($trimmed, '\\/')) {
+            return false;
+        }
+
+        // Allow strictly internal relative URLs starting with a single '/' followed by a safe character
+        if (preg_match('#^/(?!/)[a-zA-Z0-9_\-\.\?\#=/]*$#', $trimmed) || str_starts_with($trimmed, '#') || str_starts_with($trimmed, '?')) {
             return true;
         }
 
-        // Check against disallowed schemes
+        // Reject disallowed schemes explicitly
         foreach (static::$disallowedSchemes as $scheme) {
-            if (str_starts_with($trimmed, $scheme)) {
+            if (str_starts_with($trimmed, $scheme) || preg_match('#^' . preg_quote($scheme, '#') . '#i', $trimmed)) {
                 return false;
             }
         }
 
-        // Allow http://, https://, mailto:, tel:
+        // Allow approved protocols: http://, https://, mailto:, tel:
         if (preg_match('#^(https?://|mailto:|tel:)#i', $trimmed)) {
+            // Further validate absolute HTTP/HTTPS URL structure
+            if (preg_match('#^https?://#i', $trimmed)) {
+                return filter_var($url, FILTER_VALIDATE_URL) !== false;
+            }
             return true;
         }
 
-        // Unknown protocol
+        // Reject any unapproved scheme
         return false;
     }
 }

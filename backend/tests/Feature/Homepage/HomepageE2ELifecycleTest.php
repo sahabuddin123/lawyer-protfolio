@@ -29,6 +29,10 @@ class HomepageE2ELifecycleTest extends TestCase
 
         $this->adminUser = User::factory()->create();
         $this->adminUser->assignRole($adminRole);
+
+        if (HomepageSection::count() === 0) {
+            $this->seed(\Database\Seeders\CmsAndSettingsSeeder::class);
+        }
     }
 
     public function test_complete_homepage_e2e_lifecycle(): void

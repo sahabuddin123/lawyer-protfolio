@@ -39,6 +39,7 @@ class HomepageIntegrationTest extends TestCase
             'password' => bcrypt('Password123!#'),
             'is_active' => true,
         ]);
+        \Spatie\Permission\Models\Role::findOrCreate('admin', 'web');
         $this->admin->assignRole('admin');
 
         $this->unauthorizedUser = User::create([
@@ -47,6 +48,10 @@ class HomepageIntegrationTest extends TestCase
             'password' => bcrypt('Password123!#'),
             'is_active' => true,
         ]);
+
+        if (HomepageSection::count() === 0) {
+            $this->seed(\Database\Seeders\CmsAndSettingsSeeder::class);
+        }
     }
 
     public function test_homepage_api_returns_complete_hydrated_envelope(): void
@@ -391,7 +396,13 @@ class HomepageIntegrationTest extends TestCase
 
     public function test_unauthorized_user_cannot_reorder_or_update_homepage_sections(): void
     {
-        $section = HomepageSection::first();
+        $section = HomepageSection::first() ?? HomepageSection::create([
+            'section_key' => 'hero',
+            'title' => ['en' => 'Hero', 'bn' => 'হিরো'],
+            'subtitle' => ['en' => 'Sub', 'bn' => 'সাব'],
+            'sort_order' => 1,
+            'is_enabled' => true,
+        ]);
 
         $updateResponse = $this->actingAs($this->unauthorizedUser, 'sanctum')
             ->putJson("/api/v1/admin/homepage/sections/{$section->id}", [

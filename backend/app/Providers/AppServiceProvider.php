@@ -41,9 +41,13 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->ip());
         });
 
-        // Authentication Rate Limiter (Brute-force protection)
+        // Authentication Rate Limiter (Brute-force protection: dual layer IP + credential key)
         RateLimiter::for('auth', function (Request $request) {
-            return Limit::perMinute(5)->by($request->ip());
+            $email = strtolower((string) $request->input('email', ''));
+            return [
+                Limit::perMinute(5)->by($request->ip()),
+                Limit::perMinute(5)->by($email . '|' . $request->ip()),
+            ];
         });
     }
 }

@@ -15,6 +15,10 @@ class PublicPageTest extends TestCase
     {
         parent::setUp();
         CmsCacheService::flushAll();
+
+        if (Page::where('slug', 'disclaimer')->doesntExist()) {
+            $this->seed(\Database\Seeders\CmsAndSettingsSeeder::class);
+        }
     }
 
     public function test_published_page_is_accessible_by_slug(): void

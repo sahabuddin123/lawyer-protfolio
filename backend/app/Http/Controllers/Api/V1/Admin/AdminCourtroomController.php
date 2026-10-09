@@ -498,7 +498,7 @@ class AdminCourtroomController extends Controller
             subject: $document
         );
 
-        $downloadName = $media->original_name ?: $media->filename;
+        $downloadName = preg_replace('/[^\w\-\.\ \(\)]/u', '_', basename($media->original_name ?: $media->filename));
 
         return response()->download($disk->path($path), $downloadName, [
             'Content-Type' => $media->mime_type ?: 'application/octet-stream',

@@ -25,6 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api/v1',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->web(prepend: [
+            SecurityHeaders::class,
+        ]);
+
         $middleware->api(prepend: [
             SetLocale::class,
             SecurityHeaders::class,
@@ -45,6 +49,17 @@ return Application::configure(basePath: dirname(__DIR__))
                     422,
                     $e->errors(),
                     'VALIDATION_FAILED'
+                );
+            }
+        });
+
+        $exceptions->render(function (\InvalidArgumentException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return ApiResponse::error(
+                    $e->getMessage(),
+                    422,
+                    [],
+                    'INVALID_ARGUMENT'
                 );
             }
         });

@@ -1,0 +1,50 @@
+# System and IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.bak
+*.tmp
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.production.example
+!.env.testing.example
+*.local
+
+# Dependencies
+/backend/vendor/
+/frontend/node_modules/
+node_modules/
+vendor/
+
+# Build artifacts & coverage
+/frontend/dist/
+/frontend/coverage/
+dist/
+dist-ssr/
+public/build/
+public/hot/
+
+# Laravel runtime files
+/backend/storage/logs/*
+/backend/storage/framework/cache/*
+/backend/storage/framework/sessions/*
+/backend/storage/framework/views/*
+/backend/bootstrap/cache/*.php
+/backend/public/storage
+storage/*.key
+.phpunit.result.cache
+
+# Database exports and backups
+*.sql
+*.sql.gz
+*.dump
+*.sqlite
+*.sqlite3
+*.backup
+backend/database/*.sqlite
+backend/database/*.sqlite3
