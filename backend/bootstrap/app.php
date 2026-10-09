@@ -120,6 +120,13 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (Throwable $e, Request $request) {
+            \Illuminate\Support\Facades\Log::error('API Unhandled Exception: ' . $e->getMessage(), [
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'url' => $request->fullUrl(),
+            ]);
+
             if ($request->is('api/*') || $request->expectsJson()) {
                 $isLocal = config('app.debug', false);
 
