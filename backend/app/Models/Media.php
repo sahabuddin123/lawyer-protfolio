@@ -57,6 +57,11 @@ class Media extends Model
         return $this->belongsTo(User::class, 'uploaded_by');
     }
 
+    public function getFilePathAttribute(): string
+    {
+        return $this->directory . '/' . $this->filename;
+    }
+
     public function getUrlAttribute(): string
     {
         $path = $this->directory . '/' . $this->filename;

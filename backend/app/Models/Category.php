@@ -64,5 +64,10 @@ class Category extends Model
     {
         return $this->hasMany(MediaAppearance::class);
     }
+
+    public function galleryAlbums(): HasMany
+    {
+        return $this->hasMany(GalleryAlbum::class);
+    }
 }
 

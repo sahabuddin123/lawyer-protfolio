@@ -13,12 +13,12 @@ import {
   Newspaper,
   Tv,
   Calendar,
-  ExternalLink,
   ArrowRight,
   RotateCcw,
   Star,
   Layers,
 } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 export const MediaPage: React.FC = () => {
   const { locale } = useTranslation();
@@ -83,9 +83,9 @@ export const MediaPage: React.FC = () => {
         });
 
         setTabItems(res.data || []);
-        if (res.meta?.pagination) {
-          setTotalPages(res.meta.pagination.last_page);
-          setTotalCount(res.meta.pagination.total);
+        if (res.meta) {
+          setTotalPages(res.meta.last_page);
+          setTotalCount(res.meta.total);
         }
       } else if (activeTab === 'appearances') {
         const res = await mediaApi.getAppearancesList({
@@ -97,9 +97,9 @@ export const MediaPage: React.FC = () => {
         });
 
         setTabItems(res.data || []);
-        if (res.meta?.pagination) {
-          setTotalPages(res.meta.pagination.last_page);
-          setTotalCount(res.meta.pagination.total);
+        if (res.meta) {
+          setTotalPages(res.meta.last_page);
+          setTotalCount(res.meta.total);
         }
       }
     } catch {
@@ -134,6 +134,24 @@ export const MediaPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-neutral-100">
+      <SeoHead
+        title={
+          locale === 'bn'
+            ? 'মিডিয়া উপস্থিতি ও সংবাদ বিশ্লেষণ | অ্যাডভোকেট নিজাম উদ্দিন (হক)'
+            : 'Press & Media Coverage | Advocate Nijam Uddin (Haq)'
+        }
+        description={
+          locale === 'bn'
+            ? 'জাতীয় সংবাদপত্র, আইন সাময়িকী ও টেলিভিশন টকশোতে অ্যাডভোকেট নিজাম উদ্দিনের সংবিধান ও আইনের শাসন বিষয়ক সাক্ষাৎকার এবং বিশ্লেষণ।'
+            : 'A comprehensive archive of legal analyses, editorial columns, newspaper interviews, and television broadcast appearances on rule of law and constitutional jurisprudence.'
+        }
+        canonical="/media"
+        robots={debouncedSearch || selectedType !== 'all' ? 'noindex, follow' : 'index, follow'}
+        breadcrumbs={[
+          { name: locale === 'bn' ? 'হোম' : 'Home', path: '/' },
+          { name: locale === 'bn' ? 'মিডিয়া' : 'Media', path: '/media' },
+        ]}
+      />
       {/* Header */}
       <PageHeader
         title={
@@ -147,10 +165,17 @@ export const MediaPage: React.FC = () => {
             ? 'জাতীয় সংবাদপত্র, আইন সাময়িকী ও টেলিভিশন টকশোতে অ্যাডভোকেট নিজাম উদ্দিনের সংবিধান ও আইনের শাসন বিষয়ক সাক্ষাৎকার এবং বিশ্লেষণ।'
             : 'A comprehensive archive of legal analyses, editorial columns, newspaper interviews, and television broadcast appearances on rule of law and constitutional jurisprudence.'
         }
-        breadcrumbs={[
-          { label: locale === 'bn' ? 'হোম' : 'Home', href: '/' },
-          { label: locale === 'bn' ? 'মিডিয়া' : 'Media' },
-        ]}
+        breadcrumbs={
+          <nav className="flex items-center gap-2 text-xs text-neutral-400">
+            <a href="/" className="hover:text-gold-primary transition-colors">
+              {locale === 'bn' ? 'হোম' : 'Home'}
+            </a>
+            <span>/</span>
+            <span className="text-gold-primary">
+              {locale === 'bn' ? 'মিডিয়া' : 'Media'}
+            </span>
+          </nav>
+        }
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">

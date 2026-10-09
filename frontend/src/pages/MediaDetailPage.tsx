@@ -12,10 +12,8 @@ import {
   Newspaper,
   Tv,
   AlertCircle,
-  Share2,
-  FileText,
-  Clock,
 } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 export const MediaDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -79,6 +77,10 @@ export const MediaDetailPage: React.FC = () => {
   if (error || !item) {
     return (
       <div className="min-h-screen bg-black text-neutral-100 py-20">
+        <SeoHead
+          title={locale === 'bn' ? 'মিডিয়া রেকর্ড খুঁজে পাওয়া যায়নি | চেম্বার' : 'Media Record Not Found | Chambers'}
+          robots="noindex, nofollow"
+        />
         <div className="max-w-2xl mx-auto px-4 text-center space-y-6">
           <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
           <h1 className="text-2xl font-serif text-neutral-100">
@@ -106,6 +108,25 @@ export const MediaDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-neutral-100 pb-24">
+      <SeoHead
+        title={`${title} | ${locale === 'bn' ? 'মিডিয়া কাভারেজ | অ্যাডভোকেট নিজাম উদ্দিন (হক)' : 'Press & Media | Advocate Nijam Uddin (Haq)'}`}
+        description={description || (locale === 'bn' ? `${title} — সংবাদ প্রকাশনা ও মিডিয়া উপস্থিতি।` : `National media coverage and legal commentary: ${title}.`)}
+        canonical={`/media/${slug}`}
+        ogType="article"
+        breadcrumbs={[
+          { name: locale === 'bn' ? 'হোম' : 'Home', path: '/' },
+          { name: locale === 'bn' ? 'মিডিয়া' : 'Media', path: '/media' },
+          { name: title, path: `/media/${slug}` },
+        ]}
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: title,
+          description: description,
+          datePublished: date,
+          url: `https://nijamuddin.com/media/${slug}`,
+        }}
+      />
       {/* Editorial Top Hero Bar */}
       <div className="border-b border-neutral-800/80 bg-neutral-950/60 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
@@ -147,7 +168,7 @@ export const MediaDetailPage: React.FC = () => {
                   </span>
                 </>
               )}
-              <Badge variant="secondary" className="capitalize text-xs">
+              <Badge variant="outline" className="capitalize text-xs">
                 {(item.media_type || 'General').replace('_', ' ')}
               </Badge>
             </div>

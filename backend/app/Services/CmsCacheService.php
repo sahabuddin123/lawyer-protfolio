@@ -17,6 +17,9 @@ class CmsCacheService
     public const TTL_JUDGMENTS = 86400;
     public const TTL_PUBLICATIONS = 86400;
     public const TTL_MEDIA = 86400;
+    public const TTL_VIDEOS = 86400;
+    public const TTL_GALLERY = 86400;
+    public const TTL_CONTACT = 86400;
 
     /**
      * Cache key generators
@@ -296,6 +299,81 @@ class CmsCacheService
         static::forgetMediaAppearances($slug);
     }
 
+    public static function videoListKey(string $locale, int $page = 1, array $filters = []): string
+    {
+        ksort($filters);
+        $filterHash = !empty($filters) ? md5(http_build_query($filters)) : 'default';
+        return "cms:videos:list:{$locale}:p{$page}:f{$filterHash}";
+    }
+
+    public static function videoDetailKey(string $slug, string $locale): string
+    {
+        return "cms:videos:detail:{$slug}:{$locale}";
+    }
+
+    public static function forgetVideos(?string $slug = null): void
+    {
+        if ($slug) {
+            Cache::forget(static::videoDetailKey($slug, 'en'));
+            Cache::forget(static::videoDetailKey($slug, 'bn'));
+        }
+
+        static::forgetHome();
+
+        for ($p = 1; $p <= 10; $p++) {
+            Cache::forget("cms:videos:list:en:p{$p}:fdefault");
+            Cache::forget("cms:videos:list:bn:p{$p}:fdefault");
+        }
+    }
+
+    public static function galleryListKey(string $locale, int $page = 1, array $filters = []): string
+    {
+        ksort($filters);
+        $filterHash = !empty($filters) ? md5(http_build_query($filters)) : 'default';
+        return "cms:gallery:list:{$locale}:p{$page}:f{$filterHash}";
+    }
+
+    public static function galleryDetailKey(string $slug, string $locale): string
+    {
+        return "cms:gallery:detail:{$slug}:{$locale}";
+    }
+
+    public static function forgetGallery(?string $slug = null): void
+    {
+        if ($slug) {
+            Cache::forget(static::galleryDetailKey($slug, 'en'));
+            Cache::forget(static::galleryDetailKey($slug, 'bn'));
+        }
+
+        static::forgetHome();
+
+        for ($p = 1; $p <= 10; $p++) {
+            Cache::forget("cms:gallery:list:en:p{$p}:fdefault");
+            Cache::forget("cms:gallery:list:bn:p{$p}:fdefault");
+        }
+    }
+
+    public static function contactConfigKey(string $locale): string
+    {
+        return "cms:contact:config:{$locale}";
+    }
+
+    public static function forgetContactConfig(): void
+    {
+        Cache::forget(static::contactConfigKey('en'));
+        Cache::forget(static::contactConfigKey('bn'));
+    }
+
+    public static function sitemapKey(): string
+    {
+        return 'cms:sitemap:xml';
+    }
+
+    public static function forgetSitemap(): void
+    {
+        Cache::forget(static::sitemapKey());
+    }
+
     public static function flushAll(): void
     {
         static::forgetSettings();
@@ -308,6 +386,11 @@ class CmsCacheService
         static::forgetJudgments();
         static::forgetPublications();
         static::forgetMedia();
+        static::forgetVideos();
+        static::forgetGallery();
+        static::forgetContactConfig();
+        static::forgetSitemap();
     }
 }
+
 

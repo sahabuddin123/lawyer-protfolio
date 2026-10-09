@@ -16,6 +16,7 @@ import {
   Send,
   Sparkles,
 } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 export const PracticeAreaDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -82,6 +83,10 @@ export const PracticeAreaDetailPage: React.FC = () => {
   if (error || !practiceArea) {
     return (
       <div className="min-h-screen bg-background-base text-text-primary flex items-center justify-center px-4">
+        <SeoHead
+          title={locale === 'bn' ? 'কার্যক্ষেত্রটি পাওয়া যায়নি | চেম্বার' : 'Practice Domain Not Found | Chambers'}
+          robots="noindex, nofollow"
+        />
         <div className="max-w-md w-full bg-surface-card border border-border-subtle rounded-lg p-8 text-center shadow-lg">
           <AlertCircle className="w-12 h-12 text-gold-primary mx-auto mb-4" />
           <h2 className="text-xl font-serif-editorial font-bold text-text-primary mb-2">
@@ -105,6 +110,28 @@ export const PracticeAreaDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-base text-text-primary selection:bg-gold-primary/20 selection:text-gold-hover pb-24">
+      <SeoHead
+        title={`${title} | ${locale === 'bn' ? 'অ্যাডভোকেট নিজাম উদ্দিন (হক)' : 'Chambers of Advocate Nijam Uddin (Haq)'}`}
+        description={shortDesc || (locale === 'bn' ? `${title} সংক্রান্ত বিশেষায়িত আইনি সেবা ও প্রতিনিধিত্ব।` : `Specialized legal representation in ${title} by Advocate Nijam Uddin (Haq).`)}
+        canonical={`/practice-areas/${slug}`}
+        breadcrumbs={[
+          { name: locale === 'bn' ? 'হোম' : 'Home', path: '/' },
+          { name: locale === 'bn' ? 'প্র্যাকটিস এরিয়া' : 'Practice Areas', path: '/practice-areas' },
+          { name: title, path: `/practice-areas/${slug}` },
+        ]}
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'LegalService',
+          name: `${title} — Chambers of Advocate Nijam Uddin (Haq)`,
+          description: shortDesc,
+          url: `https://nijamuddin.com/practice-areas/${slug}`,
+          provider: {
+            '@type': 'Person',
+            name: 'Advocate Nijam Uddin (Haq)',
+            jobTitle: 'Advocate, Supreme Court of Bangladesh',
+          },
+        }}
+      />
       {/* 1. Breadcrumbs */}
       <div className="border-b border-border-subtle bg-surface-base/80 backdrop-blur-sm sticky top-16 z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between text-xs text-text-muted">

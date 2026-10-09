@@ -112,8 +112,8 @@ class AdminMediaAppearanceController extends Controller
         $appearance = MediaAppearance::create([
             'category_id' => $validated['category_id'] ?? null,
             'media_type' => trim($validated['media_type']),
-            'channel' => $validated['channel'],
-            'program' => $validated['program'],
+            'channel' => $validated['channel'] ?? ['en' => '', 'bn' => ''],
+            'program' => $validated['program'] ?? ['en' => '', 'bn' => ''],
             'title' => $validated['title'],
             'slug' => strtolower(trim($validated['slug'])),
             'video_url' => $validated['video_url'] ?? null,
@@ -223,8 +223,8 @@ class AdminMediaAppearanceController extends Controller
         $mediaAppearance->update([
             'category_id' => $validated['category_id'] ?? null,
             'media_type' => trim($validated['media_type']),
-            'channel' => $validated['channel'],
-            'program' => $validated['program'],
+            'channel' => $validated['channel'] ?? $mediaAppearance->channel,
+            'program' => $validated['program'] ?? $mediaAppearance->program ?? ['en' => '', 'bn' => ''],
             'title' => $validated['title'],
             'slug' => $newSlug,
             'video_url' => $validated['video_url'] ?? null,
@@ -299,8 +299,16 @@ class AdminMediaAppearanceController extends Controller
     {
         $items = $request->validated()['items'];
 
-        foreach ($items as $index => $id) {
-            MediaAppearance::where('id', $id)->update(['sort_order' => $index]);
+        if ($request->has('order') && is_array($request->input('order'))) {
+            foreach ($request->input('order') as $entry) {
+                if (is_array($entry) && isset($entry['id'], $entry['sort_order'])) {
+                    MediaAppearance::where('id', $entry['id'])->update(['sort_order' => (int) $entry['sort_order']]);
+                }
+            }
+        } else {
+            foreach ($items as $index => $id) {
+                MediaAppearance::where('id', $id)->update(['sort_order' => $index]);
+            }
         }
 
         CmsCacheService::forgetMediaAppearances();
@@ -350,6 +358,9 @@ class AdminMediaAppearanceController extends Controller
         $absolutePath = Storage::disk($disk)->path($filePath);
         $downloadName = $document->original_name ?: basename($filePath);
 
-        return response()->download($absolutePath, $downloadName);
+        return response()->download($absolutePath, $downloadName, [
+            'Content-Type' => $document->mime_type ?: 'application/pdf',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 }

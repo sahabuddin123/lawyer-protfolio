@@ -74,6 +74,7 @@ class AdminSettingController extends Controller
 
         // Flush CMS cache
         CmsCacheService::forgetSettings();
+        CmsCacheService::forgetContactConfig();
 
         // Audit Log
         ActivityLog::record(

@@ -23,10 +23,12 @@ class MediaPress extends Model
         'category_id',
         'media_type',
         'media_name',
+        'source_name',
         'title',
         'slug',
         'published_date',
         'article_url',
+        'external_url',
         'featured_image_id',
         'document_media_id',
         'description',
@@ -183,5 +185,33 @@ class MediaPress extends Model
             $q->where('media_name->en', 'like', "%{$source}%")
                 ->orWhere('media_name->bn', 'like', "%{$source}%");
         });
+    }
+
+    public function setSourceNameAttribute($value): void
+    {
+        if (is_string($value)) {
+            $this->attributes['media_name'] = json_encode(['en' => $value, 'bn' => $value]);
+        } elseif (is_array($value)) {
+            $this->attributes['media_name'] = json_encode($value);
+        }
+    }
+
+    public function getSourceNameAttribute()
+    {
+        $name = $this->media_name;
+        if (is_array($name)) {
+            return $name[app()->getLocale()] ?? $name['en'] ?? $name['bn'] ?? null;
+        }
+        return $name;
+    }
+
+    public function setExternalUrlAttribute($value): void
+    {
+        $this->attributes['article_url'] = $value;
+    }
+
+    public function getExternalUrlAttribute()
+    {
+        return $this->article_url;
     }
 }

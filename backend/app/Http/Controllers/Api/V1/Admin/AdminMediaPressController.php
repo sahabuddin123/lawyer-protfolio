@@ -297,8 +297,16 @@ class AdminMediaPressController extends Controller
     {
         $items = $request->validated()['items'];
 
-        foreach ($items as $index => $id) {
-            MediaPress::where('id', $id)->update(['sort_order' => $index]);
+        if ($request->has('order') && is_array($request->input('order'))) {
+            foreach ($request->input('order') as $entry) {
+                if (is_array($entry) && isset($entry['id'], $entry['sort_order'])) {
+                    MediaPress::where('id', $entry['id'])->update(['sort_order' => (int) $entry['sort_order']]);
+                }
+            }
+        } else {
+            foreach ($items as $index => $id) {
+                MediaPress::where('id', $id)->update(['sort_order' => $index]);
+            }
         }
 
         CmsCacheService::forgetMediaPress();
@@ -348,6 +356,9 @@ class AdminMediaPressController extends Controller
         $absolutePath = Storage::disk($disk)->path($filePath);
         $downloadName = $document->original_name ?: basename($filePath);
 
-        return response()->download($absolutePath, $downloadName);
+        return response()->download($absolutePath, $downloadName, [
+            'Content-Type' => $document->mime_type ?: 'application/pdf',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 }

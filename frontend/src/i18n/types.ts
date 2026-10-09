@@ -95,6 +95,23 @@ export interface TranslationDictionary {
     contactEyebrow: string;
     contactTitle: string;
     contactDescription: string;
+    aboutEyebrow: string;
+    aboutTitle: string;
+    aboutDescription: string;
+    credentialsEyebrow: string;
+    credentialsTitle: string;
+    credentialsDescription: string;
+    viewFullProfile: string;
+    viewAllPracticeAreas: string;
+    viewAllCourtroom: string;
+    viewAllJudgments: string;
+    viewAllResearch: string;
+    viewAllPublications: string;
+    viewAllVideos: string;
+    viewAllMedia: string;
+    viewAllGallery: string;
+    scheduleConsultation: string;
+    explorePracticeAreas: string;
   };
   forms: {
     fullName: string;

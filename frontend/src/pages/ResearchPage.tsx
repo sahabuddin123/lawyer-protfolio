@@ -9,6 +9,7 @@ import { researchApi } from '@/api/research';
 import { LegalResearch } from '@/types';
 import { TaxonomyCategory } from '@/types/research';
 import { Search, ChevronLeft, ChevronRight, AlertCircle, BookOpen, FileText } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 export const ResearchPage: React.FC = () => {
   const { locale } = useTranslation();
@@ -121,6 +122,24 @@ export const ResearchPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-base text-text-primary pb-24">
+      <SeoHead
+        title={
+          locale === 'bn'
+            ? 'আইনি গবেষণা ও প্রবন্ধ | অ্যাডভোকেট নিজাম উদ্দিন (হক)'
+            : 'Legal Research & Papers | Advocate Nijam Uddin (Haq)'
+        }
+        description={
+          locale === 'bn'
+            ? 'সাংবিধানিক অনুচ্ছেদ, সংবিধিবদ্ধ আইনের ব্যাখ্যা এবং তুলনামূলক আইনশাস্ত্রের ওপর সুপ্রিম কোর্ট আইনজীবী নিজাম উদ্দিন (হক)-এর গবেষণামূলক রচনা ও পর্যালোচনা।'
+            : 'Authoritative treatises, statutory analyses, and peer-reviewed jurisprudence examining constitutional doctrine, procedural reforms, and judicial interpretation in Bangladesh.'
+        }
+        canonical="/research"
+        robots={debouncedSearch || selectedCategory !== 'all' || selectedType !== 'all' ? 'noindex, follow' : 'index, follow'}
+        breadcrumbs={[
+          { name: locale === 'bn' ? 'হোম' : 'Home', path: '/' },
+          { name: locale === 'bn' ? 'আইনি গবেষণা' : 'Legal Research', path: '/research' },
+        ]}
+      />
       {/* Editorial Page Header */}
       <PageHeader
         eyebrow={locale === 'bn' ? 'আইন গবেষণা ও পাণ্ডিত্য' : 'Jurisprudential Scholarship'}

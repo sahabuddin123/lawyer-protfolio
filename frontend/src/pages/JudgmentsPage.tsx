@@ -18,6 +18,7 @@ import {
   FileText,
   ArrowRight,
 } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 export const JudgmentsPage: React.FC = () => {
   const { locale } = useTranslation();
@@ -126,6 +127,24 @@ export const JudgmentsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-judicial-bg text-white pb-24">
+      <SeoHead
+        title={
+          locale === 'bn'
+            ? 'যুগান্তকারী রায় ও পর্যালোচনা | অ্যাডভোকেট নিজাম উদ্দিন (হক)'
+            : 'Judgment Reviews & Case Law | Advocate Nijam Uddin (Haq)'
+        }
+        description={
+          locale === 'bn'
+            ? 'বাংলাদেশ সুপ্রিম কোর্টের গুরুত্বপূর্ণ সিদ্ধান্তসমূহ, আইনি অনুসিদ্ধান্ত এবং ব্যবহারিক প্রয়োগের বিশ্লেষণ।'
+            : 'Authoritative analyses of Supreme Court decisions, ratio decidendi holding, and judicial precedent impact.'
+        }
+        canonical="/judgments"
+        robots={debouncedSearch || selectedCourt !== 'all' || selectedPracticeArea !== 'all' ? 'noindex, follow' : 'index, follow'}
+        breadcrumbs={[
+          { name: locale === 'bn' ? 'হোম' : 'Home', path: '/' },
+          { name: locale === 'bn' ? 'রায় পর্যালোচনা' : 'Judgment Reviews', path: '/judgments' },
+        ]}
+      />
       {/* Editorial Page Header */}
       <PageHeader
         title={locale === 'bn' ? 'যুগান্তকারী রায় ও পর্যালোচনা' : 'Landmark Judgment Reviews'}

@@ -164,7 +164,13 @@ class MediaPressController extends Controller
     public function downloadDocument(string $slug): BinaryFileResponse|JsonResponse
     {
         $mediaPress = MediaPress::query()
-            ->where('slug', $slug)
+            ->where(function ($q) use ($slug) {
+                if (is_numeric($slug)) {
+                    $q->where('id', (int) $slug);
+                } else {
+                    $q->where('slug', $slug);
+                }
+            })
             ->published()
             ->publicVisibility()
             ->with(['documentMedia'])
@@ -185,6 +191,9 @@ class MediaPressController extends Controller
         $absolutePath = Storage::disk($disk)->path($filePath);
         $downloadName = $document->original_name ?: basename($filePath);
 
-        return response()->download($absolutePath, $downloadName);
+        return response()->download($absolutePath, $downloadName, [
+            'Content-Type' => $document->mime_type ?: 'application/pdf',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 }

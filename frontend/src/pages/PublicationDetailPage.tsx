@@ -17,6 +17,7 @@ import {
   Tag,
   ShieldCheck,
 } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 export const PublicationDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -104,6 +105,10 @@ export const PublicationDetailPage: React.FC = () => {
   if (error || !publication) {
     return (
       <div className="min-h-screen bg-[#07090e] text-white py-24">
+        <SeoHead
+          title={locale === 'bn' ? 'প্রকাশনা পাওয়া যায়নি | চেম্বার' : 'Publication Not Found | Chambers'}
+          robots="noindex, nofollow"
+        />
         <div className="container mx-auto px-4 max-w-2xl text-center">
           <div className="bg-red-950/20 border border-red-500/30 rounded-2xl p-12">
             <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
@@ -139,6 +144,28 @@ export const PublicationDetailPage: React.FC = () => {
 
   return (
     <article className="min-h-screen bg-[#07090e] text-neutral-100 py-16">
+      <SeoHead
+        title={`${title} | ${locale === 'bn' ? 'আইনি প্রকাশনা | অ্যাডভোকেট নিজাম উদ্দিন (হক)' : 'Publications | Advocate Nijam Uddin (Haq)'}`}
+        description={excerpt || (locale === 'bn' ? `${title} — আইনি প্রকাশনা ও গবেষণাপত্র।` : `Published legal treatise and commentary on ${title}.`)}
+        canonical={`/publications/${slug}`}
+        ogType="article"
+        breadcrumbs={[
+          { name: locale === 'bn' ? 'হোম' : 'Home', path: '/' },
+          { name: locale === 'bn' ? 'প্রকাশনা' : 'Publications', path: '/publications' },
+          { name: title, path: `/publications/${slug}` },
+        ]}
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: title,
+          description: excerpt,
+          author: {
+            '@type': 'Person',
+            name: author || 'Advocate Nijam Uddin (Haq)',
+          },
+          url: `https://nijamuddin.com/publications/${slug}`,
+        }}
+      />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
         {/* Navigation Breadcrumb */}
         <nav

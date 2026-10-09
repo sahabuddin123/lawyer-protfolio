@@ -672,3 +672,7 @@ export interface ResetPasswordPayload {
 }
 
 export * from './cms';
+export * from './video';
+export * from './gallery';
+export * from './contact';
+export * from './home';

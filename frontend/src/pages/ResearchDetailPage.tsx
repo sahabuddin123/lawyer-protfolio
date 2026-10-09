@@ -19,6 +19,7 @@ import {
   Eye,
   CheckCircle,
 } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 export const ResearchDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -39,11 +40,6 @@ export const ResearchDetailPage: React.FC = () => {
         const response = await researchApi.getResearchBySlug(slug);
         if (response.success && response.data) {
           setResearch(response.data);
-          // Set dynamic page title
-          const titleStr = typeof response.data.title === 'object'
-            ? (response.data.title[locale] || response.data.title.en)
-            : response.data.title;
-          document.title = `${titleStr} — Advocate Nijam Uddin`;
         } else {
           setError(response.message || 'Legal research monograph not found.');
         }
@@ -101,6 +97,10 @@ export const ResearchDetailPage: React.FC = () => {
   if (error || !research) {
     return (
       <div className="min-h-screen bg-background-base text-text-primary py-24 flex items-center justify-center">
+        <SeoHead
+          title={locale === 'bn' ? 'গবেষণা পাওয়া যায়নি | চেম্বার' : 'Monograph Not Found | Chambers'}
+          robots="noindex, nofollow"
+        />
         <div className="max-w-md mx-auto px-6 text-center">
           <AlertCircle className="w-16 h-16 text-status-error mx-auto mb-4" />
           <h2 className="text-2xl font-serif-editorial font-bold text-text-primary mb-3">
@@ -136,6 +136,29 @@ export const ResearchDetailPage: React.FC = () => {
 
   return (
     <article className="min-h-screen bg-background-base text-text-primary pb-24">
+      <SeoHead
+        title={`${title} | ${locale === 'bn' ? 'আইনি গবেষণা | অ্যাডভোকেট নিজাম উদ্দিন (হক)' : 'Legal Research | Advocate Nijam Uddin (Haq)'}`}
+        description={excerpt || (locale === 'bn' ? `${title} — আইনি গবেষণা ও বিশ্লেষণমূলক নিবন্ধ।` : `Legal research monograph and statutory analysis on ${title}.`)}
+        canonical={`/research/${slug}`}
+        ogType="article"
+        breadcrumbs={[
+          { name: locale === 'bn' ? 'হোম' : 'Home', path: '/' },
+          { name: locale === 'bn' ? 'আইনি গবেষণা' : 'Legal Research', path: '/research' },
+          { name: title, path: `/research/${slug}` },
+        ]}
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: title,
+          description: excerpt,
+          datePublished: researchDate,
+          author: {
+            '@type': 'Person',
+            name: author || 'Advocate Nijam Uddin (Haq)',
+          },
+          url: `https://nijamuddin.com/research/${slug}`,
+        }}
+      />
       {/* Editorial Breadcrumbs & Actions Header */}
       <div className="border-b border-border-subtle/80 bg-background-elevated/40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between gap-4">

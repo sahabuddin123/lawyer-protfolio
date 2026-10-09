@@ -20,6 +20,7 @@ import {
   User,
   RotateCcw,
 } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 export const PublicationsPage: React.FC = () => {
   const { locale } = useTranslation();
@@ -156,6 +157,24 @@ export const PublicationsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#07090e] text-neutral-100 py-16">
+      <SeoHead
+        title={
+          locale === 'bn'
+            ? 'আইনি প্রকাশনা ও গবেষণা মনোগ্রাফ | অ্যাডভোকেট নিজাম উদ্দিন (হক)'
+            : 'Legal Publications & Books | Advocate Nijam Uddin (Haq)'
+        }
+        description={
+          locale === 'bn'
+            ? 'বাংলাদেশ আইনশাস্ত্র ও সংবিধান সংক্রান্ত প্রকাশিত গ্রন্থ, জার্নাল প্রবন্ধ এবং আইনি সমীক্ষা।'
+            : 'Published legal treatises, academic papers, monographs, and analytical studies on Bangladesh jurisprudence.'
+        }
+        canonical="/publications"
+        robots={debouncedSearch || selectedType !== 'all' || selectedCategory !== 'all' || selectedTag !== 'all' ? 'noindex, follow' : 'index, follow'}
+        breadcrumbs={[
+          { name: locale === 'bn' ? 'হোম' : 'Home', path: '/' },
+          { name: locale === 'bn' ? 'প্রকাশনা' : 'Publications', path: '/publications' },
+        ]}
+      />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         {/* Editorial Page Header */}
         <PageHeader

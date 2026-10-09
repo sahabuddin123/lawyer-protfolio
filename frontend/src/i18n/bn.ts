@@ -107,6 +107,25 @@ export const bn: TranslationDictionary = {
     contactTitle: 'চেম্বার অ্যাপয়েন্টমেন্ট ও আইনি অনুসন্ধান',
     contactDescription:
       'আইনি পরামর্শের জন্য সুপ্রিম কোর্ট চেম্বারে সরাসরি বৈঠক নির্ধারণ অথবা তথ্যানুসন্ধান করুন।',
+    aboutEyebrow: 'আইনজীবী পরিচিতি',
+    aboutTitle: 'বিচারিক নিষ্ঠা ও গভীর আইনি অভিজ্ঞতা',
+    aboutDescription:
+      'বাংলাদেশ সুপ্রিম কোর্টে সাংবিধানিক ও আপিল মামলায় সফল আইনি প্রতিনিধিত্ব এবং ন্যায়বিচার প্রতিষ্ঠায় নিবেদিত পেশাগত জীবন।',
+    credentialsEyebrow: 'পেশাগত সনদ ও স্বীকৃতি',
+    credentialsTitle: 'বার কাউন্সিল অন্তর্ভুক্তি, আদালত ও অ্যাকাডেমিক অর্জন',
+    credentialsDescription:
+      'বাংলাদেশ বার কাউন্সিল ও সর্বোচ্চ আদালত কর্তৃক স্বীকৃত প্রাতিষ্ঠানিক সনদ এবং শিক্ষাজীবনের সম্মাননা।',
+    viewFullProfile: 'সম্পূর্ণ জীবনবৃত্তান্ত দেখুন',
+    viewAllPracticeAreas: 'সকল প্র্যাকটিস এরিয়া দেখুন',
+    viewAllCourtroom: 'সকল মামলার বিবরণ দেখুন',
+    viewAllJudgments: 'সকল রায় পর্যালোচনা দেখুন',
+    viewAllResearch: 'সকল গবেষণা প্রবন্ধ দেখুন',
+    viewAllPublications: 'সকল প্রকাশনা দেখুন',
+    viewAllVideos: 'সকল ভিডিও আর্কাইভ দেখুন',
+    viewAllMedia: 'সকল গণমাধ্যম কভারেজ দেখুন',
+    viewAllGallery: 'সম্পূর্ণ অ্যালবাম দেখুন',
+    scheduleConsultation: 'চেম্বার অ্যাপয়েন্টমেন্টের আবেদন',
+    explorePracticeAreas: 'আইনি ক্ষেত্রসমূহ দেখুন',
   },
   forms: {
     fullName: 'পূর্ণ নাম',

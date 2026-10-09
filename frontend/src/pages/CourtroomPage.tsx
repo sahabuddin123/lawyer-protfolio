@@ -7,6 +7,7 @@ import { useTranslation } from '@/i18n';
 import { courtroomApi } from '@/api/courtroom';
 import { CourtroomExperience } from '@/types/courtroom';
 import { Search, Filter, ChevronLeft, ChevronRight, AlertCircle, Gavel } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 export const CourtroomPage: React.FC = () => {
   const { locale } = useTranslation();
@@ -98,6 +99,24 @@ export const CourtroomPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-base text-text-primary pb-24">
+      <SeoHead
+        title={
+          locale === 'bn'
+            ? 'আদালতকক্ষের অভিজ্ঞতা ও নজির | অ্যাডভোকেট নিজাম উদ্দিন (হক)'
+            : 'Courtroom Experience & Advocacy | Advocate Nijam Uddin (Haq)'
+        }
+        description={
+          locale === 'bn'
+            ? 'বাংলাদেশ সুপ্রিম কোর্ট ও অধস্তন আদালতে প্রতিনিধিত্ব করা উল্লেখযোগ্য মামলা ও আইনি যুক্তিতর্কের দলিল।'
+            : 'Documented litigation portfolio, advocacy representations, and legal arguments before the Supreme Court of Bangladesh and subordinate courts.'
+        }
+        canonical="/courtroom"
+        robots={debouncedSearch || selectedCourt !== 'all' || selectedYear !== 'all' ? 'noindex, follow' : 'index, follow'}
+        breadcrumbs={[
+          { name: locale === 'bn' ? 'হোম' : 'Home', path: '/' },
+          { name: locale === 'bn' ? 'কোর্টরুম অভিজ্ঞতা' : 'Courtroom Experience', path: '/courtroom' },
+        ]}
+      />
       {/* Editorial Header */}
       <PageHeader
         eyebrow={locale === 'bn' ? 'বিচারিক কার্যবিবরণী' : 'Judicial Practice'}

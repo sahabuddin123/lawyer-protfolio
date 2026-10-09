@@ -20,6 +20,35 @@ class MediaPressRequest extends FormRequest
         return $user->can('manage_press');
     }
 
+    protected function prepareForValidation(): void
+    {
+        $merge = [];
+
+        if (empty($this->input('slug')) && !empty($this->input('title.en'))) {
+            $merge['slug'] = \Illuminate\Support\Str::slug($this->input('title.en'));
+        }
+
+        if ($this->has('source_name') && !$this->has('media_name')) {
+            $val = $this->input('source_name');
+            $merge['media_name'] = is_array($val) ? $val : ['en' => $val, 'bn' => $val];
+        } elseif ($this->has('media_name') && is_string($this->input('media_name'))) {
+            $val = $this->input('media_name');
+            $merge['media_name'] = ['en' => $val, 'bn' => $val];
+        }
+
+        if ($this->has('external_url') && !$this->has('article_url')) {
+            $merge['article_url'] = $this->input('external_url');
+        }
+
+        if ($this->has('date') && !$this->has('published_date')) {
+            $merge['published_date'] = $this->input('date');
+        }
+
+        if ($merge) {
+            $this->merge($merge);
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      */
@@ -30,21 +59,28 @@ class MediaPressRequest extends FormRequest
         return [
             'title' => 'required|array',
             'title.en' => 'required|string|max:255',
-            'title.bn' => 'nullable|string|max:255',
+            'title.bn' => 'required|string|max:255',
             'slug' => [
-                'required',
+                'nullable',
                 'string',
                 'max:255',
                 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
                 Rule::unique('media_press', 'slug')->ignore($pressId),
             ],
-            'media_type' => 'required|string|max:50',
-            'media_name' => 'required|array',
-            'media_name.en' => 'required|string|max:255',
+            'media_type' => 'required|string|in:newspaper,magazine,online,interview,press_release,column,other',
+            'source_name' => 'required_without:media_name',
+            'media_name' => 'required_without:source_name',
+            'media_name.en' => 'nullable|string|max:255',
             'media_name.bn' => 'nullable|string|max:255',
             'category_id' => 'nullable|exists:categories,id',
             'published_date' => 'nullable|date',
             'article_url' => [
+                'nullable',
+                'string',
+                'max:500',
+                'regex:/^https?:\/\/[^\s]+$/i',
+            ],
+            'external_url' => [
                 'nullable',
                 'string',
                 'max:500',
@@ -81,6 +117,19 @@ class MediaPressRequest extends FormRequest
     public function sanitizedData(): array
     {
         $data = $this->validated();
+
+        if (empty($data['media_name']) && !empty($data['source_name'])) {
+            $val = $data['source_name'];
+            $data['media_name'] = is_array($val) ? $val : ['en' => $val, 'bn' => $val];
+        }
+
+        if (empty($data['article_url']) && !empty($data['external_url'])) {
+            $data['article_url'] = $data['external_url'];
+        }
+
+        if (empty($data['slug']) && !empty($data['title']['en'])) {
+            $data['slug'] = \Illuminate\Support\Str::slug($data['title']['en']);
+        }
 
         if (isset($data['description'])) {
             $data['description'] = [

@@ -107,6 +107,25 @@ export const en: TranslationDictionary = {
     contactTitle: 'Chamber Consultation & Enquiries',
     contactDescription:
       'Schedule a formal legal conference or submit a confidential litigation brief to the Supreme Court chambers.',
+    aboutEyebrow: 'Advocate Profile',
+    aboutTitle: 'Judicial Dedication & Forensic Scholarship',
+    aboutDescription:
+      'A distinguished legal career dedicated to constitutional jurisprudence, appellate advocacy, and principled client representation before the Supreme Court of Bangladesh.',
+    credentialsEyebrow: 'Institutional Standing',
+    credentialsTitle: 'Bar Enrollment, Courts & Academic Pedigree',
+    credentialsDescription:
+      'Certified admissions, academic honors, and formal qualifications recognized across Bangladesh legal institutions.',
+    viewFullProfile: 'View Complete Biography',
+    viewAllPracticeAreas: 'View All Practice Areas',
+    viewAllCourtroom: 'View All Courtroom Briefs',
+    viewAllJudgments: 'View All Judgment Analyses',
+    viewAllResearch: 'View All Research Papers',
+    viewAllPublications: 'View All Publications',
+    viewAllVideos: 'View All Video Archives',
+    viewAllMedia: 'View All Media Appearances',
+    viewAllGallery: 'View Full Archive Gallery',
+    scheduleConsultation: 'Request Chamber Consultation',
+    explorePracticeAreas: 'Explore Practice Domains',
   },
   forms: {
     fullName: 'Full Legal Name',

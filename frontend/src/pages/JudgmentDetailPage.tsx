@@ -19,6 +19,7 @@ import {
   ArrowRight,
   ExternalLink,
 } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 export const JudgmentDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -92,6 +93,10 @@ export const JudgmentDetailPage: React.FC = () => {
   if (error || !judgment) {
     return (
       <div className="min-h-screen bg-judicial-bg text-white py-24">
+        <SeoHead
+          title={locale === 'bn' ? 'নথি পাওয়া যায়নি | চেম্বার' : 'Judgment Review Not Found | Chambers'}
+          robots="noindex, nofollow"
+        />
         <div className="container mx-auto px-4 max-w-2xl text-center">
           <div className="bg-red-950/20 border border-red-500/30 rounded-2xl p-12">
             <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
@@ -120,6 +125,28 @@ export const JudgmentDetailPage: React.FC = () => {
 
   return (
     <article className="min-h-screen bg-judicial-bg text-white pb-32">
+      <SeoHead
+        title={`${caseName} | ${locale === 'bn' ? 'রায় ও পর্যালোচনা | অ্যাডভোকেট নিজাম উদ্দিন (হক)' : 'Judgment Review | Advocate Nijam Uddin (Haq)'}`}
+        description={summary || (locale === 'bn' ? `${caseName} মামলার রায় পর্যালোচনা ও আইনি বিশ্লেষণ।` : `Authoritative review and legal analysis of ${caseName}.`)}
+        canonical={`/judgments/${slug}`}
+        ogType="article"
+        breadcrumbs={[
+          { name: locale === 'bn' ? 'হোম' : 'Home', path: '/' },
+          { name: locale === 'bn' ? 'রায় ও পর্যালোচনা' : 'Judgments', path: '/judgments' },
+          { name: caseName, path: `/judgments/${slug}` },
+        ]}
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: caseName,
+          description: summary,
+          author: {
+            '@type': 'Person',
+            name: authorName || 'Advocate Nijam Uddin (Haq)',
+          },
+          url: `https://nijamuddin.com/judgments/${slug}`,
+        }}
+      />
       {/* Top Breadcrumbs & Back Navigation */}
       <div className="border-b border-judicial-border/40 bg-black/20 backdrop-blur-sm sticky top-0 z-30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 max-w-5xl flex items-center justify-between text-xs">

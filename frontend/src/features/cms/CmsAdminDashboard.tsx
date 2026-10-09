@@ -11,13 +11,16 @@ import { ResearchManager } from '@/features/research';
 import { JudgmentManager } from '@/features/judgments';
 import { PublicationManager } from '@/features/publications';
 import { MediaManager } from '@/features/media';
+import { VideosManager } from '@/features/videos';
+import { GalleryManager } from '@/features/gallery';
+import { ContactInboxManager } from '@/features/contact';
 import { Container } from '@/components/ui/Container';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/features/auth/AuthContext';
 
 export const CmsAdminDashboard: React.FC = () => {
   const { user, hasPermission } = useAuth();
-  const [activeModule, setActiveModule] = useState<'settings' | 'pages' | 'navigation' | 'homepage' | 'redirects' | 'profile' | 'practice_areas' | 'courtroom' | 'research' | 'judgments' | 'publications' | 'media'>('settings');
+  const [activeModule, setActiveModule] = useState<'settings' | 'pages' | 'navigation' | 'homepage' | 'redirects' | 'profile' | 'practice_areas' | 'courtroom' | 'research' | 'judgments' | 'publications' | 'media' | 'videos' | 'gallery' | 'inquiries'>('settings');
 
   return (
     <div className="min-h-screen bg-black text-neutral-100 py-8">
@@ -217,6 +220,48 @@ export const CmsAdminDashboard: React.FC = () => {
               🎙 Media & Press
             </button>
           )}
+
+          {hasPermission('manage_videos') && (
+            <button
+              type="button"
+              onClick={() => setActiveModule('videos')}
+              className={`px-4 py-2.5 rounded text-sm font-medium transition-all ${
+                activeModule === 'videos'
+                  ? 'bg-legal-gold text-black shadow-lg shadow-legal-gold/10 font-semibold'
+                  : 'bg-neutral-900 text-neutral-300 hover:bg-neutral-800'
+              }`}
+            >
+              🎥 Video Archive
+            </button>
+          )}
+
+          {hasPermission('manage_gallery') && (
+            <button
+              type="button"
+              onClick={() => setActiveModule('gallery')}
+              className={`px-4 py-2.5 rounded text-sm font-medium transition-all ${
+                activeModule === 'gallery'
+                  ? 'bg-legal-gold text-black shadow-lg shadow-legal-gold/10 font-semibold'
+                  : 'bg-neutral-900 text-neutral-300 hover:bg-neutral-800'
+              }`}
+            >
+              🖼 Photo Gallery
+            </button>
+          )}
+
+          {(hasPermission('view_contacts') || hasPermission('view_consultations') || hasPermission('manage_contacts') || hasPermission('manage_consultations')) && (
+            <button
+              type="button"
+              onClick={() => setActiveModule('inquiries')}
+              className={`px-4 py-2.5 rounded text-sm font-medium transition-all ${
+                activeModule === 'inquiries'
+                  ? 'bg-legal-gold text-black shadow-lg shadow-legal-gold/10 font-semibold'
+                  : 'bg-neutral-900 text-neutral-300 hover:bg-neutral-800'
+              }`}
+            >
+              ✉ Inquiries & Consultations
+            </button>
+          )}
         </div>
 
         {/* Active Module Content */}
@@ -233,6 +278,9 @@ export const CmsAdminDashboard: React.FC = () => {
           {activeModule === 'judgments' && <JudgmentManager />}
           {activeModule === 'publications' && <PublicationManager />}
           {activeModule === 'media' && <MediaManager />}
+          {activeModule === 'videos' && <VideosManager />}
+          {activeModule === 'gallery' && <GalleryManager />}
+          {activeModule === 'inquiries' && <ContactInboxManager />}
         </Card>
       </Container>
     </div>

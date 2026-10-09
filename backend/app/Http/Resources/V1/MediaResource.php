@@ -11,7 +11,7 @@ class MediaResource extends BaseApiResource
      */
     public function toArray(Request $request): array
     {
-        if (is_null($this->resource)) {
+        if (is_null($this->resource) || $this->resource instanceof \Illuminate\Http\Resources\MissingValue) {
             return [];
         }
 

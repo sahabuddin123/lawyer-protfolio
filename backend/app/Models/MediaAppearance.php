@@ -22,14 +22,18 @@ class MediaAppearance extends Model
     protected $fillable = [
         'category_id',
         'media_type',
+        'broadcast_type',
         'channel',
         'program',
+        'program_name',
         'title',
         'slug',
         'video_url',
+        'external_url',
         'thumbnail_id',
         'document_media_id',
         'broadcast_date',
+        'appearance_date',
         'description',
         'status',
         'visibility',
@@ -55,6 +59,17 @@ class MediaAppearance extends Model
         'sort_order' => 'integer',
         'published_at' => 'datetime',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->attributes['program'])) {
+                $model->attributes['program'] = json_encode(['en' => '', 'bn' => '']);
+            }
+        });
+    }
 
     public function category(): BelongsTo
     {
@@ -188,5 +203,62 @@ class MediaAppearance extends Model
             $q->where('channel->en', 'like', "%{$channel}%")
                 ->orWhere('channel->bn', 'like', "%{$channel}%");
         });
+    }
+
+    public function setBroadcastTypeAttribute($value): void
+    {
+        $this->attributes['media_type'] = $value;
+    }
+
+    public function getBroadcastTypeAttribute()
+    {
+        return $this->attributes['media_type'] ?? null;
+    }
+
+    public function setChannelAttribute($value): void
+    {
+        if (is_string($value)) {
+            $this->attributes['channel'] = json_encode(['en' => $value, 'bn' => $value]);
+        } elseif (is_array($value)) {
+            $this->attributes['channel'] = json_encode($value);
+        }
+    }
+
+    public function setProgramNameAttribute($value): void
+    {
+        if (is_string($value)) {
+            $this->attributes['program'] = json_encode(['en' => $value, 'bn' => $value]);
+        } elseif (is_array($value)) {
+            $this->attributes['program'] = json_encode($value);
+        }
+    }
+
+    public function getProgramNameAttribute()
+    {
+        $prog = $this->program;
+        if (is_array($prog)) {
+            return $prog[app()->getLocale()] ?? $prog['en'] ?? $prog['bn'] ?? null;
+        }
+        return $prog;
+    }
+
+    public function setAppearanceDateAttribute($value): void
+    {
+        $this->attributes['broadcast_date'] = $value;
+    }
+
+    public function getAppearanceDateAttribute()
+    {
+        return $this->broadcast_date?->format('Y-m-d') ?: ($this->attributes['broadcast_date'] ?? null);
+    }
+
+    public function setExternalUrlAttribute($value): void
+    {
+        $this->attributes['video_url'] = $value;
+    }
+
+    public function getExternalUrlAttribute()
+    {
+        return $this->video_url;
     }
 }

@@ -21,6 +21,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 export const AboutPage: React.FC = () => {
   const { locale } = useTranslation();
@@ -99,6 +100,24 @@ export const AboutPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-legal-midnight text-legal-slate-200">
+      <SeoHead
+        title={locale === 'bn' ? 'অ্যাডভোকেট নিজাম উদ্দিন (হক) সম্পর্কে | সুপ্রিম কোর্ট আইনজীবী' : 'About Advocate Nijam Uddin (Haq) | Supreme Court of Bangladesh'}
+        description={resolveText(profile?.short_bio) || (locale === 'bn' ? 'অ্যাডভোকেট নিজাম উদ্দিন (হক)-এর পূর্ণাঙ্গ আইনি প্রোফাইল, শিক্ষা, সুপ্রিম কোর্টের প্র্যাকটিস ও অভিজ্ঞতা।' : 'Comprehensive legal profile, judicial credentials, education, and Supreme Court practice of Advocate Nijam Uddin (Haq).')}
+        canonical="/about"
+        ogType="profile"
+        breadcrumbs={[
+          { name: locale === 'bn' ? 'হোম' : 'Home', path: '/' },
+          { name: locale === 'bn' ? 'পরিচিতি' : 'About', path: '/about' },
+        ]}
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'Person',
+          name: 'Advocate Nijam Uddin (Haq)',
+          jobTitle: 'Advocate, Supreme Court of Bangladesh',
+          alumniOf: 'University of Chittagong',
+          url: 'https://nijamuddin.com/about',
+        }}
+      />
       {/* 1. Profile Hero Section */}
       <section className="relative overflow-hidden border-b border-legal-slate-800/80 bg-gradient-to-b from-legal-slate-900 via-legal-midnight to-legal-midnight py-16 lg:py-24">
         {/* Subtle Background Accent */}

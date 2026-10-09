@@ -17,7 +17,9 @@ use App\Http\Controllers\Api\V1\Public\HomeController;
 use App\Http\Controllers\Api\V1\Public\NavigationController;
 use App\Http\Controllers\Api\V1\Public\PageController;
 use App\Http\Controllers\Api\V1\Public\ProfileController;
+use App\Http\Controllers\Api\V1\Public\RobotsController;
 use App\Http\Controllers\Api\V1\Public\SettingsController;
+use App\Http\Controllers\Api\V1\Public\SitemapController;
 use App\Http\Controllers\Api\V1\Admin\AdminPracticeAreaController;
 use App\Http\Controllers\Api\V1\Public\PracticeAreaController as PublicPracticeAreaController;
 use App\Http\Controllers\Api\V1\Admin\AdminCourtroomController;
@@ -35,6 +37,13 @@ use App\Http\Controllers\Api\V1\Admin\AdminMediaAppearanceController;
 use App\Http\Controllers\Api\V1\Public\MediaPressController;
 use App\Http\Controllers\Api\V1\Public\MediaAppearanceController;
 use App\Http\Controllers\Api\V1\Public\MediaController;
+use App\Http\Controllers\Api\V1\Admin\AdminVideoController;
+use App\Http\Controllers\Api\V1\Public\VideoController as PublicVideoController;
+use App\Http\Controllers\Api\V1\Admin\AdminGalleryAlbumController;
+use App\Http\Controllers\Api\V1\Public\PublicGalleryController;
+use App\Http\Controllers\Api\V1\Public\PublicContactController;
+use App\Http\Controllers\Api\V1\Admin\AdminContactMessageController;
+use App\Http\Controllers\Api\V1\Admin\AdminConsultationRequestController;
 use App\Http\Resources\V1\UserResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\User;
@@ -72,6 +81,11 @@ Route::middleware(['throttle:api'])->group(function () {
     Route::get('/pages/{slug}', [PageController::class, 'show']);
     Route::get('/home', [HomeController::class, 'index']);
 
+    // Technical SEO
+    Route::get('/sitemap', [SitemapController::class, 'jsonSummary']);
+    Route::get('/sitemap.xml', [SitemapController::class, 'index']);
+    Route::get('/robots.txt', [RobotsController::class, 'index']);
+
     // Phase 6 Profile Public Routes
     Route::get('/profile', [ProfileController::class, 'index']);
     Route::get('/credentials', [ProfileController::class, 'credentials']);
@@ -104,24 +118,37 @@ Route::middleware(['throttle:api'])->group(function () {
     // Phase 12 Media Public Routes
     Route::get('/media/press', [MediaPressController::class, 'index']);
     Route::get('/media/press/{slug}/download', [MediaPressController::class, 'downloadDocument']);
+    Route::get('/media/press/{slug}/document', [MediaPressController::class, 'downloadDocument']);
     Route::get('/media/press/{slug}', [MediaPressController::class, 'show']);
 
     Route::get('/media/appearances', [MediaAppearanceController::class, 'index']);
     Route::get('/media/appearances/{slug}/download', [MediaAppearanceController::class, 'downloadDocument']);
+    Route::get('/media/appearances/{slug}/document', [MediaAppearanceController::class, 'downloadDocument']);
     Route::get('/media/appearances/{slug}', [MediaAppearanceController::class, 'show']);
 
     Route::get('/media', [MediaController::class, 'index']);
     Route::get('/media/{slug}', [MediaController::class, 'show']);
+
+    // Phase 13 Videos Public Routes
+    Route::get('/videos', [PublicVideoController::class, 'index']);
+    Route::get('/videos/{slug}', [PublicVideoController::class, 'show']);
+
+    // Phase 14 Gallery Public Routes
+    Route::get('/gallery', [PublicGalleryController::class, 'index']);
+    Route::get('/gallery/{slug}', [PublicGalleryController::class, 'show']);
+
+    // Phase 15 Contact & Consultation Public Routes
+    Route::get('/contact', [PublicContactController::class, 'index']);
 
     // Taxonomy Public Routes
     Route::get('/categories', [TaxonomyController::class, 'categories']);
     Route::get('/tags', [TaxonomyController::class, 'tags']);
 });
 
-
-// Client Intake Route Group Foundation (Rate-limited to 5 req/min)
+// Phase 15 Client Intake Public Endpoints (Rate-limited to 5 req/min with Honeypot trap)
 Route::middleware(['throttle:intake'])->group(function () {
-    // Honeypot-guarded public inquiry endpoints will register here
+    Route::post('/contact', [PublicContactController::class, 'submitContact']);
+    Route::post('/consultation', [PublicContactController::class, 'submitConsultation']);
 });
 
 // Admin / Authenticated API Route Group (Sanctum protected + RBAC)
@@ -304,12 +331,57 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:api'])->group(func
         Route::delete('/{mediaAppearance}', [AdminMediaAppearanceController::class, 'destroy']);
     });
 
+    // Phase 13 Videos Admin Routes
+    Route::prefix('videos')->middleware('permission:manage_videos')->group(function () {
+        Route::get('/', [AdminVideoController::class, 'index']);
+        Route::post('/', [AdminVideoController::class, 'store']);
+        Route::post('/reorder', [AdminVideoController::class, 'reorder']);
+        Route::get('/{video}/preview', [AdminVideoController::class, 'preview']);
+        Route::get('/{video}', [AdminVideoController::class, 'show']);
+        Route::put('/{video}', [AdminVideoController::class, 'update']);
+        Route::delete('/{video}', [AdminVideoController::class, 'destroy']);
+    });
+
+    // Phase 14 Gallery Admin Routes
+    Route::prefix('gallery')->middleware('permission:manage_gallery')->group(function () {
+        Route::get('/', [AdminGalleryAlbumController::class, 'index']);
+        Route::post('/', [AdminGalleryAlbumController::class, 'store']);
+        Route::post('/reorder', [AdminGalleryAlbumController::class, 'reorder']);
+        Route::get('/{album}/preview', [AdminGalleryAlbumController::class, 'preview']);
+        Route::get('/{album}', [AdminGalleryAlbumController::class, 'show']);
+        Route::put('/{album}', [AdminGalleryAlbumController::class, 'update']);
+        Route::delete('/{album}', [AdminGalleryAlbumController::class, 'destroy']);
+
+        // Image sub-resource endpoints
+        Route::post('/{album}/images', [AdminGalleryAlbumController::class, 'attachImage']);
+        Route::post('/{album}/images/upload', [AdminGalleryAlbumController::class, 'uploadImage']);
+        Route::put('/{album}/images/{image}', [AdminGalleryAlbumController::class, 'updateImage']);
+        Route::delete('/{album}/images/{image}', [AdminGalleryAlbumController::class, 'detachImage']);
+        Route::post('/{album}/images/reorder', [AdminGalleryAlbumController::class, 'reorderImages']);
+        Route::post('/{album}/images/{image}/set-cover', [AdminGalleryAlbumController::class, 'setCoverImage']);
+    });
+
     // Taxonomies Admin Routes
     Route::prefix('taxonomies')->middleware('permission:edit_research|create_research|manage_settings')->group(function () {
         Route::get('/categories', [AdminTaxonomyController::class, 'categories']);
         Route::post('/categories', [AdminTaxonomyController::class, 'storeCategory']);
         Route::get('/tags', [AdminTaxonomyController::class, 'tags']);
         Route::post('/tags', [AdminTaxonomyController::class, 'storeTag']);
+    });
+
+    // Phase 15 Contact & Consultation Admin Routes
+    Route::prefix('contacts')->middleware('permission:view_contacts|manage_contacts')->group(function () {
+        Route::get('/', [AdminContactMessageController::class, 'index']);
+        Route::get('/{contact}', [AdminContactMessageController::class, 'show']);
+        Route::patch('/{contact}', [AdminContactMessageController::class, 'update']);
+        Route::delete('/{contact}', [AdminContactMessageController::class, 'destroy']);
+    });
+
+    Route::prefix('consultations')->middleware('permission:view_consultations|manage_consultations')->group(function () {
+        Route::get('/', [AdminConsultationRequestController::class, 'index']);
+        Route::get('/{consultation}', [AdminConsultationRequestController::class, 'show']);
+        Route::patch('/{consultation}', [AdminConsultationRequestController::class, 'update']);
+        Route::delete('/{consultation}', [AdminConsultationRequestController::class, 'destroy']);
     });
 });
 

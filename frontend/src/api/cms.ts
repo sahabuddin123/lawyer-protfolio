@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { ApiResponse, ApiPaginatedResponse, SiteSetting, Menu, MenuItem, Page, HomepageSection, Redirect } from '@/types';
+import type { ApiResponse, ApiPaginatedResponse, SiteSetting, Menu, MenuItem, Page, HomepageSection, Redirect, PublicHomepageData } from '@/types';
 
 export const cmsApi = {
   // Public APIs
@@ -20,8 +20,8 @@ export const cmsApi = {
     return response.data.data;
   },
 
-  getPublicHome: async (): Promise<any> => {
-    const response = await apiClient.get<ApiResponse<any>>('/home');
+  getPublicHome: async (): Promise<PublicHomepageData> => {
+    const response = await apiClient.get<ApiResponse<PublicHomepageData>>('/home');
     return response.data.data;
   },
 

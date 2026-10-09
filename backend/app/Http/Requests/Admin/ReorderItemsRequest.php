@@ -14,6 +14,28 @@ class ReorderItemsRequest extends FormRequest
         return true; // Controller checks specific permission
     }
 
+    protected function prepareForValidation(): void
+    {
+        $raw = null;
+        if ($this->has('order') && !$this->has('items')) {
+            $raw = $this->input('order');
+        } elseif ($this->has('items')) {
+            $raw = $this->input('items');
+        }
+
+        if (is_array($raw)) {
+            $items = [];
+            foreach ($raw as $entry) {
+                if (is_array($entry) && isset($entry['id'])) {
+                    $items[] = (int) $entry['id'];
+                } elseif (is_numeric($entry)) {
+                    $items[] = (int) $entry;
+                }
+            }
+            $this->merge(['items' => $items, 'raw_items' => $raw]);
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      */

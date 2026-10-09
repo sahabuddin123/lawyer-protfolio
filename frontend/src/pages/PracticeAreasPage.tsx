@@ -8,6 +8,7 @@ import { useTranslation } from '@/i18n';
 import { practiceAreaApi } from '@/api/practiceAreas';
 import { PracticeArea } from '@/types/practiceArea';
 import { Search, Sparkles, Filter, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 export const PracticeAreasPage: React.FC = () => {
   const { locale } = useTranslation();
@@ -83,6 +84,20 @@ export const PracticeAreasPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-base text-text-primary selection:bg-gold-primary/20 selection:text-gold-hover pb-24">
+      <SeoHead
+        title={locale === 'bn' ? 'প্র্যাকটিস এরিয়া ও আইনি পরামর্শ | অ্যাডভোকেট নিজাম উদ্দিন (হক)' : 'Legal Practice Areas | Chambers of Advocate Nijam Uddin (Haq)'}
+        description={
+          locale === 'bn'
+            ? 'বাংলাদেশ সুপ্রিম কোর্টের হাইকোর্ট ও আপিল বিভাগের সাংবিধানিক, দেওয়ানি, বাণিজ্যিক ও রাজস্ব সংক্রান্ত বিশেষায়িত আইনি সেবা।'
+            : 'Authoritative advocacy across constitutional writs, appellate review, commercial contracts, and high-stakes dispute resolution before the Supreme Court of Bangladesh.'
+        }
+        canonical="/practice-areas"
+        robots={debouncedSearch ? 'noindex, follow' : 'index, follow'}
+        breadcrumbs={[
+          { name: locale === 'bn' ? 'হোম' : 'Home', path: '/' },
+          { name: locale === 'bn' ? 'প্র্যাকটিস এরিয়া' : 'Practice Areas', path: '/practice-areas' },
+        ]}
+      />
       {/* 1. Page Header */}
       <PageHeader
         eyebrow={locale === 'bn' ? 'আইনি বিশেষত্ব' : 'Jurisdictional Specializations'}

@@ -19,6 +19,7 @@ import {
   ArrowRight,
   ShieldCheck,
 } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 export const CourtroomDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -85,6 +86,10 @@ export const CourtroomDetailPage: React.FC = () => {
   if (error || !experience) {
     return (
       <div className="min-h-screen bg-background-base text-text-primary py-24 flex items-center justify-center">
+        <SeoHead
+          title={locale === 'bn' ? 'মামলা খুঁজে পাওয়া যায়নি | চেম্বার' : 'Record Not Found | Chambers'}
+          robots="noindex, nofollow"
+        />
         <div className="max-w-md mx-auto px-6 text-center">
           <AlertCircle className="w-16 h-16 text-status-error mx-auto mb-4" />
           <h2 className="text-2xl font-serif-editorial font-bold text-text-primary mb-3">
@@ -116,6 +121,27 @@ export const CourtroomDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-base text-text-primary pb-32">
+      <SeoHead
+        title={`${title} | ${locale === 'bn' ? 'কোর্টরুম অভিজ্ঞতা | অ্যাডভোকেট নিজাম উদ্দিন (হক)' : 'Courtroom Experience | Advocate Nijam Uddin (Haq)'}`}
+        description={summary || (locale === 'bn' ? `${title} মামলার বিবরণ ও আইনি যুক্তিতর্ক।` : `Judicial litigation proceedings and legal arguments in ${title}.`)}
+        canonical={`/courtroom/${slug}`}
+        breadcrumbs={[
+          { name: locale === 'bn' ? 'হোম' : 'Home', path: '/' },
+          { name: locale === 'bn' ? 'কোর্টরুম অভিজ্ঞতা' : 'Courtroom Experience', path: '/courtroom' },
+          { name: title, path: `/courtroom/${slug}` },
+        ]}
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: title,
+          description: summary,
+          author: {
+            '@type': 'Person',
+            name: 'Advocate Nijam Uddin (Haq)',
+          },
+          url: `https://nijamuddin.com/courtroom/${slug}`,
+        }}
+      />
       {/* Top Breadcrumb & Return Bar */}
       <div className="border-b border-border-subtle bg-surface-base/60 backdrop-blur-md sticky top-0 z-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">

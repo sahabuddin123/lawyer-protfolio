@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /storage/secure/
+
+Sitemap: https://nijamuddin.com/sitemap.xml
