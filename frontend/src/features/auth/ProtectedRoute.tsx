@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { RoleName } from '../../types';
 
@@ -16,6 +17,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   fallback,
 }) => {
   const { isAuthenticated, isLoading, hasRole, hasPermission } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -27,11 +29,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   if (!isAuthenticated) {
     return (
-      fallback || (
-        <div className="p-8 text-center text-secondary font-sans">
-          Authentication required. Please authenticate to access this administrative sector.
-        </div>
-      )
+      fallback || <Navigate to="/admin/login" state={{ from: location }} replace />
     );
   }
 

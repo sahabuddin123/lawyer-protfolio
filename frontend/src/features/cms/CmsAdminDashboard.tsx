@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 import { SettingsManager } from './SettingsManager';
 import { PagesManager } from './PagesManager';
 import { NavigationManager } from './NavigationManager';
@@ -19,7 +21,8 @@ import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/features/auth/AuthContext';
 
 export const CmsAdminDashboard: React.FC = () => {
-  const { user, hasPermission } = useAuth();
+  const { user, hasPermission, logout } = useAuth();
+  const navigate = useNavigate();
   const [activeModule, setActiveModule] = useState<'settings' | 'pages' | 'navigation' | 'homepage' | 'redirects' | 'profile' | 'practice_areas' | 'courtroom' | 'research' | 'judgments' | 'publications' | 'media' | 'videos' | 'gallery' | 'inquiries'>('settings');
 
   return (
@@ -40,14 +43,29 @@ export const CmsAdminDashboard: React.FC = () => {
             </h1>
           </div>
 
-          <div className="flex items-center space-x-3 bg-neutral-900 px-4 py-2 rounded border border-neutral-800">
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <div className="text-xs">
-              <span className="text-white font-medium">{user?.name || 'Administrator'}</span>
-              <span className="text-neutral-500 block font-mono">
-                {user?.roles?.join(', ') || 'Staff'}
-              </span>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 bg-neutral-900 px-4 py-2 rounded border border-neutral-800">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="text-xs">
+                <span className="text-white font-medium">{user?.name || 'Administrator'}</span>
+                <span className="text-neutral-500 block font-mono">
+                  {user?.roles?.join(', ') || 'Staff'}
+                </span>
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={async () => {
+                await logout();
+                navigate('/admin/login', { replace: true });
+              }}
+              className="px-3 py-2 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-red-400 rounded border border-neutral-800 text-xs font-mono transition-colors flex items-center gap-1.5 cursor-pointer"
+              title="Sign Out of Admin Portal"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Log Out</span>
+            </button>
           </div>
         </div>
 

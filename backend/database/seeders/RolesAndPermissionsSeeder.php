@@ -171,22 +171,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ];
         $mediaManager->syncPermissions($mediaManagerPermissions);
 
-        // 4. Create Development/Testing Super Admin User
-        $devEmail = config('auth.admin.email', 'admin@nijamuddin.com');
-        $devPassword = config('auth.admin.password', 'Haq@Judicial2026!#');
-
-        $user = User::firstOrCreate(
-            ['email' => $devEmail],
-            [
-                'name' => 'Advocate Nijam Uddin (Super Admin)',
-                'password' => Hash::make($devPassword),
-                'phone' => '+8801700000000',
-                'is_active' => true,
-            ]
-        );
-
-        if (!$user->hasRole('super_admin')) {
-            $user->assignRole('super_admin');
-        }
+        // 4. Delegate initial Super Admin account creation to dedicated SuperAdminSeeder
+        $this->call(SuperAdminSeeder::class);
     }
 }

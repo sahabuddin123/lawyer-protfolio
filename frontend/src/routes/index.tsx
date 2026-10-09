@@ -102,8 +102,19 @@ const VideosManager = lazy(() =>
 const GalleryManager = lazy(() =>
   import('@/features/gallery').then((m) => ({ default: m.GalleryManager }))
 );
+const AdminLoginPage = lazy(() =>
+  import('@/pages/AdminLoginPage').then((m) => ({ default: m.AdminLoginPage }))
+);
 
 export const router = createBrowserRouter([
+  {
+    path: '/admin/login',
+    element: withSuspense(AdminLoginPage),
+  },
+  {
+    path: '/login',
+    element: withSuspense(AdminLoginPage),
+  },
   {
     path: '/',
     element: <RootLayout />,

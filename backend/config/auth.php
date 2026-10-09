@@ -112,4 +112,19 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Initial Super Administrator Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for initial Super Admin seeding and CLI provisioning.
+    |
+    */
+    'admin' => [
+        'name' => env('INITIAL_ADMIN_NAME', 'Site Administrator'),
+        'email' => env('INITIAL_ADMIN_EMAIL'),
+        'password' => env('INITIAL_ADMIN_PASSWORD'),
+        'phone' => env('INITIAL_ADMIN_PHONE'),
+    ],
+
 ];

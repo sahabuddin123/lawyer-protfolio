@@ -150,6 +150,16 @@ cmd_check() {
         fi
     fi
 
+    # 7. Check database connectivity and pending migrations safely
+    if [[ -f "${SHARED_DIR}/.env" ]]; then
+        log "Testing database connectivity and pending migrations (read-only)..."
+        if (cd "${SCRIPT_DIR}/backend" && php artisan migrate:status >/dev/null 2>&1); then
+            log_success "Database connectivity verified. Migration status: OK."
+        else
+            log_warn "Database connectivity check failed or migrations table uninitialized."
+        fi
+    fi
+
     log_success "Environment check completed successfully."
 }
 
@@ -197,7 +207,7 @@ cmd_build() {
 # COMMAND: deploy
 # ------------------------------------------------------------------------------
 cmd_deploy() {
-    # MANDATORY APPROVAL GATE
+    # MANDATORY MULTI-FACTOR APPROVAL GATE
     if [[ "${DEPLOY_APPROVED:-false}" != "true" ]]; then
         log_err "=================================================================="
         log_err "DEPLOYMENT HALTED: EXPLICIT APPROVAL GATE REQUIRED."
@@ -206,6 +216,31 @@ cmd_deploy() {
         log_err "=================================================================="
         exit 1
     fi
+
+    # Defense-in-depth: Flag alone is insufficient without explicit operator confirmation
+    local permit_file="${BASE_DEPLOY_DIR}/.deploy_permit"
+    if [[ ! -f "${permit_file}" && "${CONFIRM_DEPLOYMENT:-false}" != "true" ]]; then
+        if [ -t 0 ]; then
+            echo -e "${YELLOW}==================================================================${NC}"
+            echo -e "${YELLOW}LIVE PRODUCTION RELEASE ACTIVATION REQUESTED${NC}"
+            echo -e "${YELLOW}==================================================================${NC}"
+            read -r -p "Type 'ACTIVATE-PRODUCTION' to proceed: " confirm_input
+            if [[ "${confirm_input}" != "ACTIVATE-PRODUCTION" ]]; then
+                log_err "Deployment canceled by operator."
+                exit 1
+            fi
+        else
+            log_err "=================================================================="
+            log_err "NON-INTERACTIVE DEPLOYMENT REJECTED: PERMIT FILE REQUIRED."
+            log_err "A command-line flag alone cannot bypass the approval gate."
+            log_err "Create single-use permit file or pass CONFIRM_DEPLOYMENT=true:"
+            log_err "  touch ${permit_file}"
+            log_err "=================================================================="
+            exit 1
+        fi
+    fi
+    # Consume single-use permit if present
+    rm -f "${permit_file}"
 
     acquire_lock
     mkdir -p "${LOGS_DIR}" "${SHARED_DIR}" "${RELEASES_DIR}"
@@ -329,6 +364,14 @@ cmd_rollback() {
             php artisan route:cache || true
             php artisan view:cache || true
         )
+    fi
+
+    # Sync rolled-back frontend assets to WWW_ROOT if configured
+    if [[ -d "${WWW_ROOT}" && "${WWW_ROOT}" != "${CURRENT_SYMLINK}"* ]]; then
+        log "Restoring frontend assets in ${WWW_ROOT} from rolled-back release..."
+        mkdir -p "${WWW_ROOT}/assets"
+        cp -r "${CURRENT_SYMLINK}/frontend/dist/assets/." "${WWW_ROOT}/assets/"
+        cp "${CURRENT_SYMLINK}/frontend/dist/index.html" "${WWW_ROOT}/index.html"
     fi
 
     # Reload PHP-FPM
