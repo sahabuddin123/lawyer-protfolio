@@ -28,6 +28,7 @@ dist/
 dist-ssr/
 public/build/
 public/hot/
+docs
 
 # Laravel runtime files
 /backend/storage/logs/*
