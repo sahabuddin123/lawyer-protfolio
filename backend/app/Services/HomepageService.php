@@ -93,7 +93,7 @@ class HomepageService
             ];
 
         // 4. Featured Credentials
-        $credentialsLimit = $sectionConfigs['credentials']->settings['limit'] ?? 4;
+        $credentialsLimit = ($sectionConfigs['credentials'] ?? null)?->settings['limit'] ?? 4;
         $credentials = Credential::with('certificate')
             ->active()
             ->orderByDesc('is_featured')
@@ -104,7 +104,7 @@ class HomepageService
         $featuredCredentials = CredentialResource::collection($credentials)->toArray($request);
 
         // 5. Featured Practice Areas
-        $practiceAreaLimit = $sectionConfigs['practice_areas']->settings['limit'] ?? 6;
+        $practiceAreaLimit = ($sectionConfigs['practice_areas'] ?? null)?->settings['limit'] ?? 6;
         $practiceAreas = PracticeArea::with('featuredImage')
             ->published()
             ->orderByDesc('is_featured')
@@ -115,7 +115,7 @@ class HomepageService
         $featuredPracticeAreas = PracticeAreaResource::collection($practiceAreas)->toArray($request);
 
         // 6. Featured Courtroom Experiences
-        $courtroomLimit = $sectionConfigs['courtroom']->settings['limit'] ?? 3;
+        $courtroomLimit = ($sectionConfigs['courtroom'] ?? null)?->settings['limit'] ?? 3;
         $courtroom = CourtroomExperience::with(['practiceArea', 'featuredImage'])
             ->published()
             ->publicVisibility()
@@ -127,7 +127,7 @@ class HomepageService
         $featuredCourtroom = CourtroomExperienceResource::collection($courtroom)->toArray($request);
 
         // 7. Featured Judgment Reviews
-        $judgmentsLimit = $sectionConfigs['judgment_reviews']->settings['limit'] ?? 3;
+        $judgmentsLimit = ($sectionConfigs['judgment_reviews'] ?? null)?->settings['limit'] ?? 3;
         $judgments = JudgmentReview::with(['practiceArea', 'featuredImage'])
             ->published()
             ->publicVisibility()
@@ -139,7 +139,7 @@ class HomepageService
         $featuredJudgments = JudgmentReviewResource::collection($judgments)->toArray($request);
 
         // 8. Featured Legal Research
-        $researchLimit = $sectionConfigs['research']->settings['limit'] ?? 3;
+        $researchLimit = ($sectionConfigs['research'] ?? null)?->settings['limit'] ?? 3;
         $research = LegalResearch::with(['category', 'featuredImage'])
             ->published()
             ->publicVisibility()
@@ -151,7 +151,7 @@ class HomepageService
         $featuredResearch = LegalResearchResource::collection($research)->toArray($request);
 
         // 9. Featured Publications
-        $publicationsLimit = $sectionConfigs['publications']->settings['limit'] ?? 3;
+        $publicationsLimit = ($sectionConfigs['publications'] ?? null)?->settings['limit'] ?? 3;
         $publications = Publication::with(['category', 'coverImage'])
             ->published()
             ->publicVisibility()
@@ -163,7 +163,7 @@ class HomepageService
         $featuredPublications = PublicationResource::collection($publications)->toArray($request);
 
         // 10. Featured Videos
-        $videosLimit = $sectionConfigs['videos']->settings['limit'] ?? 3;
+        $videosLimit = ($sectionConfigs['videos'] ?? null)?->settings['limit'] ?? 3;
         $videos = Video::with(['category', 'thumbnail'])
             ->published()
             ->public()
@@ -175,7 +175,7 @@ class HomepageService
         $featuredVideos = VideoResource::collection($videos)->toArray($request);
 
         // 11. Featured Media (Press & Electronic Appearances)
-        $mediaLimit = $sectionConfigs['media']->settings['limit'] ?? 4;
+        $mediaLimit = ($sectionConfigs['media'] ?? null)?->settings['limit'] ?? 4;
         $press = MediaPress::with(['category', 'featuredImage'])
             ->published()
             ->publicVisibility()
@@ -198,7 +198,7 @@ class HomepageService
         $mergedMedia = array_slice(array_merge($pressTransformed, $appearancesTransformed), 0, $mediaLimit);
 
         // 12. Featured Gallery
-        $galleryLimit = $sectionConfigs['gallery']->settings['limit'] ?? 6;
+        $galleryLimit = ($sectionConfigs['gallery'] ?? null)?->settings['limit'] ?? 6;
         $gallery = GalleryAlbum::with(['coverImage', 'category', 'publicImages.media'])
             ->published()
             ->public()
