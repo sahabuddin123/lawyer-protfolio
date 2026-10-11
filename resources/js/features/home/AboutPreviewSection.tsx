@@ -45,14 +45,19 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({
     about.avatar?.url ||
     '/images/portrait-nijamuddin.jpg';
 
+  const actionLabel =
+    resolveLocalized(sectionConfig?.settings?.cta_label, locale) ||
+    t.sections.viewFullProfile;
+  const actionUrl = sectionConfig?.settings?.cta_url || '/about';
+
   return (
     <HomeSectionWrapper
       id="about"
       eyebrow={eyebrow}
       title={title}
       description={description}
-      actionLabel={t.sections.viewFullProfile}
-      actionUrl="/about"
+      actionLabel={actionLabel}
+      actionUrl={actionUrl}
     >
       <Card className="overflow-hidden border border-border-subtle bg-surface-card shadow-lg">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 items-stretch">

@@ -33,11 +33,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
   // Primary & Secondary CTAs
   const primaryCtaText =
-    resolveLocalized(hero.primary_cta_label, locale) ||
+    resolveLocalized(sectionConfig?.settings?.cta_label, locale) ||
+    resolveLocalized(hero?.primary_cta_label, locale) ||
     t.sections.scheduleConsultation ||
     t.nav.bookConsultation;
   const secondaryCtaText =
-    resolveLocalized(hero.secondary_cta_label, locale) ||
+    resolveLocalized(sectionConfig?.settings?.secondary_cta_label, locale) ||
+    resolveLocalized(hero?.secondary_cta_label, locale) ||
     t.sections.explorePracticeAreas ||
     t.nav.practiceAreas;
 
@@ -45,22 +47,23 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     if (onConsultationClick) {
       onConsultationClick();
     } else {
-      navigate('/contact');
+      navigate(sectionConfig?.settings?.cta_url || '/contact');
     }
   };
 
   const handleSecondaryClick = () => {
-    navigate('/practice-areas');
+    navigate(sectionConfig?.settings?.secondary_cta_url || '/practice-areas');
   };
 
   // Image source resolution
   const portraitUrl =
-    hero.hero_image?.variants?.large ||
-    hero.hero_image?.url ||
-    hero.court_robes_photo?.variants?.large ||
-    hero.court_robes_photo?.url ||
-    hero.avatar?.variants?.large ||
-    hero.avatar?.url ||
+    sectionConfig?.settings?.image_url ||
+    hero?.hero_image?.variants?.large ||
+    hero?.hero_image?.url ||
+    hero?.court_robes_photo?.variants?.large ||
+    hero?.court_robes_photo?.url ||
+    hero?.avatar?.variants?.large ||
+    hero?.avatar?.url ||
     '/images/portrait-nijamuddin.jpg';
 
   // Badges from verified data

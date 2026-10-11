@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             SuperAdminSeeder::class,
             CmsAndSettingsSeeder::class,
+            HomepageSectionSeeder::class,
             ProfileAndCredentialsSeeder::class,
             PracticeAreaSeeder::class,
         ]);

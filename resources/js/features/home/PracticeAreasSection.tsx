@@ -29,14 +29,19 @@ export const PracticeAreasSection: React.FC<PracticeAreasSectionProps> = ({
   const description =
     resolveLocalized(sectionConfig?.content, locale) || t.sections.practiceAreasDescription;
 
+  const actionLabel =
+    resolveLocalized(sectionConfig?.settings?.cta_label, locale) ||
+    t.sections.viewAllPracticeAreas;
+  const actionUrl = sectionConfig?.settings?.cta_url || '/practice-areas';
+
   return (
     <HomeSectionWrapper
       id="practice-areas"
       eyebrow={eyebrow}
       title={title}
       description={description}
-      actionLabel={t.sections.viewAllPracticeAreas}
-      actionUrl="/practice-areas"
+      actionLabel={actionLabel}
+      actionUrl={actionUrl}
       className="bg-background-secondary"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

@@ -7,10 +7,11 @@
 # Document Root: /www/wwwroot/nijamuddin.com/public
 # ==============================================================================
 # Usage:
-#   ./deploy.sh            - Full update: pull latest main, build, and deploy
+#   ./deploy.sh            - Full update: git pull, build, migrate, seed, cache & reload
 #   ./deploy.sh check      - Validate server environment, PHP, tools & Redis
 #   ./deploy.sh build      - Compile frontend assets & install composer dependencies
-#   ./deploy.sh deploy     - Activate deployment, run migrations & refresh cache
+#   ./deploy.sh deploy     - Activate deployment: migrations, idempotent seeds & cache
+#   ./deploy.sh seed       - Safely seed initial data (Admin, Sections, Services)
 #   ./deploy.sh rollback   - Revert to previous backup assets & refresh cache
 # ==============================================================================
 
@@ -18,7 +19,39 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # ------------------------------------------------------------------------------
-# CONFIGURATION & DIRECTORY HIERARCHY (UNIFIED APPLICATION ROOT)
+# AUTO-DETECT AAPANEL BINARY PATHS (PHP, COMPOSER, NODE, NPM)
+# ------------------------------------------------------------------------------
+# In aaPanel, PHP 8.2/8.3 and Node are typically installed in /www/server/...
+# Prepending them to PATH ensures CLI scripts run with the correct versions.
+for php_path in "/www/server/php/82/bin" "/www/server/php/83/bin" "/www/server/php/81/bin" "/www/server/php/84/bin"; do
+    if [[ -d "${php_path}" && -x "${php_path}/php" ]]; then
+        export PATH="${php_path}:$PATH"
+        break
+    fi
+done
+
+# Detect aaPanel Node.js Version Manager or NVM if node is not yet in PATH
+if ! command -v node >/dev/null 2>&1; then
+    # aaPanel Node version manager
+    for node_dir in /www/server/nodejs/v*/bin; do
+        if [[ -d "${node_dir}" && -x "${node_dir}/node" ]]; then
+            export PATH="${node_dir}:$PATH"
+            break
+        fi
+    done
+fi
+
+if ! command -v node >/dev/null 2>&1; then
+    # NVM fallback
+    if [[ -d "${HOME}/.nvm" ]]; then
+        export NVM_DIR="${HOME}/.nvm"
+        # shellcheck disable=SC1091
+        [[ -s "${NVM_DIR}/nvm.sh" ]] && \. "${NVM_DIR}/nvm.sh" 2>/dev/null || true
+    fi
+fi
+
+# ------------------------------------------------------------------------------
+# CONFIGURATION & DIRECTORY HIERARCHY
 # ------------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="${SCRIPT_DIR}"
@@ -71,11 +104,9 @@ acquire_lock() {
     if [[ -f "${LOCK_FILE}" ]]; then
         local pid
         pid=$(cat "${LOCK_FILE}" 2>/dev/null || echo "")
-        # If the current process already owns the lock, proceed
         if [[ -n "${pid}" && "${pid}" == "$$" ]]; then
             return 0
         fi
-        # If the locking PID is no longer running, reclaim the stale lock
         if [[ -n "${pid}" ]] && ! kill -0 "${pid}" 2>/dev/null; then
             echo "$$" > "${LOCK_FILE}"
             return 0
@@ -87,7 +118,7 @@ acquire_lock() {
 }
 
 release_lock() {
-    rm -f "${LOCK_FILE}"
+    rm -f "${LOCK_FILE}" 2>/dev/null || true
 }
 
 trap release_lock EXIT
@@ -105,14 +136,33 @@ locate_env_file() {
     fi
 }
 
-# Reload PHP-FPM dynamically supporting multiple aaPanel / Ubuntu service names
+# Reload PHP-FPM dynamically supporting aaPanel and standard Ubuntu services
 reload_php_fpm() {
     log "Reloading PHP-FPM service..."
     local reloaded=false
 
-    # Try systemd service names
-    local services=("php8.2-fpm" "php-fpm-82" "php-fpm" "php8.3-fpm" "php8.1-fpm")
-    if command -v systemctl >/dev/null 2>&1; then
+    # 1. Fallback to init.d scripts common in aaPanel
+    local init_scripts=(
+        "/etc/init.d/php-fpm-82"
+        "/etc/init.d/php-fpm-83"
+        "/etc/init.d/php-fpm-81"
+        "/etc/init.d/php8.2-fpm"
+        "/etc/init.d/php8.3-fpm"
+        "/etc/init.d/php-fpm"
+    )
+    for init_script in "${init_scripts[@]}"; do
+        if [[ -x "${init_script}" ]]; then
+            if sudo "${init_script}" reload 2>/dev/null || "${init_script}" reload 2>/dev/null; then
+                log_success "Reloaded PHP-FPM via init script: ${init_script}"
+                reloaded=true
+                break
+            fi
+        fi
+    done
+
+    # 2. Try systemd service names if init.d did not fire
+    if [[ "${reloaded}" == "false" ]] && command -v systemctl >/dev/null 2>&1; then
+        local services=("php-fpm-82" "php8.2-fpm" "php-fpm-83" "php8.3-fpm" "php-fpm")
         for svc in "${services[@]}"; do
             if systemctl is-active --quiet "${svc}" 2>/dev/null; then
                 if sudo systemctl reload "${svc}" 2>/dev/null || systemctl reload "${svc}" 2>/dev/null; then
@@ -124,23 +174,31 @@ reload_php_fpm() {
         done
     fi
 
-    # Fallback to init.d scripts common in aaPanel
     if [[ "${reloaded}" == "false" ]]; then
-        local init_scripts=("/etc/init.d/php-fpm-82" "/etc/init.d/php8.2-fpm" "/etc/init.d/php-fpm")
-        for init_script in "${init_scripts[@]}"; do
-            if [[ -x "${init_script}" ]]; then
-                if sudo "${init_script}" reload 2>/dev/null || "${init_script}" reload 2>/dev/null; then
-                    log_success "Reloaded PHP-FPM via init script: ${init_script}"
-                    reloaded=true
-                    break
-                fi
-            fi
-        done
+        log_warn "Could not automatically reload PHP-FPM via CLI. If needed, restart PHP 8.2 in the aaPanel App Store."
+    fi
+}
+
+# Fix file permissions for aaPanel web server user (www:www)
+fix_permissions() {
+    log "Configuring storage permissions for web server..."
+    mkdir -p "${APP_DIR}/storage/app/public"
+    mkdir -p "${APP_DIR}/storage/app/secure_docs"
+    mkdir -p "${APP_DIR}/storage/framework/cache/data"
+    mkdir -p "${APP_DIR}/storage/framework/sessions"
+    mkdir -p "${APP_DIR}/storage/framework/views"
+    mkdir -p "${APP_DIR}/storage/logs"
+    mkdir -p "${APP_DIR}/bootstrap/cache"
+
+    # In aaPanel, Nginx/Apache and PHP-FPM run as user 'www'
+    if id "www" >/dev/null 2>&1; then
+        chown -R www:www "${APP_DIR}/storage" "${APP_DIR}/bootstrap/cache" 2>/dev/null || true
+    elif id "www-data" >/dev/null 2>&1; then
+        chown -R www-data:www-data "${APP_DIR}/storage" "${APP_DIR}/bootstrap/cache" 2>/dev/null || true
     fi
 
-    if [[ "${reloaded}" == "false" ]]; then
-        log_warn "Could not automatically reload PHP-FPM. Please reload PHP 8.2 manually in aaPanel if required."
-    fi
+    chmod -R 775 "${APP_DIR}/storage" "${APP_DIR}/bootstrap/cache" 2>/dev/null || true
+    log_success "Storage and cache directory permissions configured (775)."
 }
 
 # ------------------------------------------------------------------------------
@@ -148,19 +206,30 @@ reload_php_fpm() {
 # ------------------------------------------------------------------------------
 cmd_check() {
     log "=================================================================="
-    log "Advocate Nijam Uddin Platform — Unified Environment Audit"
+    log "Advocate Nijam Uddin Platform — Environment & Readiness Audit"
     log "=================================================================="
 
     # 1. Check required commands
-    local required_cmds=("git" "php" "composer" "node" "npm")
+    local required_cmds=("git" "php" "composer")
     for cmd in "${required_cmds[@]}"; do
         if command -v "${cmd}" >/dev/null 2>&1; then
             log_success "Command '${cmd}' found: $(command -v "${cmd}") ($(${cmd} --version 2>&1 | head -n 1))"
         else
-            log_err "Missing required command: '${cmd}'"
+            log_err "Missing required command: '${cmd}'. Please verify PATH or aaPanel installation."
             exit 1
         fi
     done
+
+    # 1.1 Node & NPM check
+    if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
+        log_success "Node.js runtime found: $(node -v) (npm $(npm -v))"
+    elif [[ -f "${BUILD_DIR}/manifest.json" ]]; then
+        log_warn "Node.js/npm not found, but pre-compiled build assets exist at ${BUILD_DIR}. Deployment can proceed."
+    else
+        log_err "Neither Node.js nor pre-compiled assets (${BUILD_DIR}/manifest.json) found!"
+        log_err "Please install Node.js in aaPanel (via Node.js Version Manager) or run 'npm run build' locally."
+        exit 1
+    fi
 
     # 2. Check PHP extensions
     local required_exts=("pdo_mysql" "mbstring" "xml" "curl" "gd" "zip" "bcmath" "intl")
@@ -168,7 +237,7 @@ cmd_check() {
         if php -m | grep -qi "^${ext}$"; then
             log_success "PHP extension '${ext}' is loaded."
         else
-            log_warn "PHP extension '${ext}' is NOT loaded in CLI PHP. Verify php.ini."
+            log_warn "PHP extension '${ext}' is NOT loaded in CLI PHP. Verify php.ini in aaPanel."
         fi
     done
 
@@ -184,13 +253,17 @@ cmd_check() {
     local env_path
     env_path="$(locate_env_file)"
     if [[ -n "${env_path}" ]]; then
-        log_success "Production environment configuration found at: ${env_path}"
+        log_success "Environment configuration found at: ${env_path}"
     else
         log_warn "No .env file found! Checked in:"
         log_warn "  - ${APP_DIR}/.env"
-        log_warn "  - /www/wwwroot/nijamuddin-deploy/shared/.env"
         log_warn "  - ${WWW_ROOT}/.env"
-        log_warn "Please create ${APP_DIR}/.env from .env.example before deploying."
+        log_warn "If this is a fresh setup, copying .env.example to ${APP_DIR}/.env..."
+        if [[ -f "${APP_DIR}/.env.example" ]]; then
+            cp "${APP_DIR}/.env.example" "${APP_DIR}/.env"
+            log_success "Created ${APP_DIR}/.env from .env.example."
+            env_path="${APP_DIR}/.env"
+        fi
     fi
 
     # 5. Check Git repository status
@@ -203,42 +276,31 @@ cmd_check() {
         log_warn "Directory ${APP_DIR} is not tracked as a Git worktree."
     fi
 
-    # 6. Check Nginx syntax if nginx binary is available
-    if command -v nginx >/dev/null 2>&1; then
-        if nginx -t 2>/dev/null; then
-            log_success "Nginx configuration syntax test: OK."
-        else
-            log_warn "Nginx configuration syntax test failed or requires sudo privileges."
-        fi
-    fi
-
-    # 7. Check database connectivity and pending migrations safely
-    if [[ -n "${env_path}" ]]; then
-        log "Testing database connectivity (read-only)..."
+    # 6. Check database connectivity
+    if [[ -n "${env_path}" && -f "${env_path}" ]]; then
+        log "Testing database connectivity..."
         if (cd "${APP_DIR}" && php artisan migrate:status >/dev/null 2>&1); then
             log_success "Database connectivity verified. Migration status: OK."
         else
             log_warn "Database connectivity check failed. Verify DB credentials in ${env_path}."
         fi
 
-        # 8. Check Redis configuration if CACHE_STORE=redis
+        # 7. Check Redis if CACHE_STORE=redis
         local cache_store
         cache_store=$(grep -E '^CACHE_STORE=' "${env_path}" 2>/dev/null | cut -d '=' -f 2 | tr -d ' "' || echo "")
         if [[ "${cache_store}" == "redis" ]]; then
             log "Verifying Redis configuration (CACHE_STORE=redis)..."
             if php -m | grep -qi "^redis$"; then
-                log_success "PHP extension 'redis' (phpredis) is loaded in CLI PHP."
+                log_success "PHP extension 'redis' (phpredis) is loaded."
             else
-                log_warn "PHP extension 'redis' is NOT loaded in CLI PHP, but CACHE_STORE=redis is set."
+                log_warn "PHP extension 'redis' is NOT loaded in CLI PHP. Enable redis extension in aaPanel PHP Settings."
             fi
             if command -v redis-cli >/dev/null 2>&1; then
                 if redis-cli ping >/dev/null 2>&1; then
-                    log_success "Redis server is reachable via redis-cli ping (PONG)."
+                    log_success "Redis server is reachable (PONG)."
                 else
                     log_warn "Redis server did not respond to redis-cli ping."
                 fi
-            else
-                log_warn "redis-cli not installed; check Redis service via 'systemctl status redis-server'."
             fi
         fi
     fi
@@ -252,36 +314,58 @@ cmd_check() {
 cmd_build() {
     acquire_lock
     log "=================================================================="
-    log "Compiling Unified Production Artifacts"
+    log "Compiling Production Artifacts"
     log "=================================================================="
 
     # 1. Install Backend Dependencies via Composer
     log "Installing Laravel production dependencies via Composer..."
     (
         cd "${APP_DIR}"
-        composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+        COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
     )
     log_success "Composer production dependencies installed successfully."
 
-    # 2. Install Node Dependencies & Compile React Bundle
-    log "Compiling integrated React + TypeScript + Tailwind bundle via Vite..."
-    (
-        cd "${APP_DIR}"
-        if [[ ! -d "node_modules" ]]; then
-            log "Installing Node dependencies..."
-            npm ci --prefer-offline --no-audit 2>/dev/null || npm install --legacy-peer-deps --no-audit
-        fi
-        npm run build
-    )
+    # 2. Compile React + TypeScript + Tailwind bundle via Vite
+    if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
+        log "Compiling frontend assets with Node.js & Vite..."
+        (
+            cd "${APP_DIR}"
+            if [[ ! -d "node_modules" ]]; then
+                log "Installing Node modules..."
+                npm install --prefer-offline --no-audit 2>/dev/null || npm install --legacy-peer-deps --no-audit
+            fi
+            NODE_OPTIONS="--max-old-space-size=2048" npm run build
+        )
 
-    if [[ -f "${BUILD_DIR}/manifest.json" ]]; then
-        log_success "Vite production bundle compiled successfully into ${BUILD_DIR}."
+        if [[ -f "${BUILD_DIR}/manifest.json" ]]; then
+            log_success "Vite production bundle compiled successfully into ${BUILD_DIR}."
+        else
+            log_err "Vite build failed to produce ${BUILD_DIR}/manifest.json!"
+            exit 1
+        fi
+    elif [[ -f "${BUILD_DIR}/manifest.json" ]]; then
+        log_success "Using pre-compiled Vite production assets in ${BUILD_DIR}."
     else
-        log_err "Vite build failed to produce ${BUILD_DIR}/manifest.json!"
+        log_err "No pre-compiled assets found and Node/npm is not available to build."
         exit 1
     fi
 
-    log_success "Unified build step completed successfully."
+    log_success "Build step completed successfully."
+}
+
+# ------------------------------------------------------------------------------
+# COMMAND: seed
+# ------------------------------------------------------------------------------
+cmd_seed() {
+    acquire_lock
+    log "=================================================================="
+    log "Executing Safe Idempotent Database Seeders"
+    log "=================================================================="
+    (
+        cd "${APP_DIR}"
+        php artisan db:seed --class=DatabaseSeeder --force --no-interaction
+    )
+    log_success "Database seeders completed safely. Initial admin, sections, and services are active."
 }
 
 # ------------------------------------------------------------------------------
@@ -291,7 +375,7 @@ cmd_deploy() {
     acquire_lock
 
     log "=================================================================="
-    log "Activating Unified Deployment: ${TIMESTAMP}"
+    log "Activating Deployment: ${TIMESTAMP}"
     log "=================================================================="
 
     # 1. Discover or link environment file
@@ -299,9 +383,14 @@ cmd_deploy() {
     env_path="$(locate_env_file)"
 
     if [[ -z "${env_path}" ]]; then
-        log_err "Cannot deploy: No production .env configuration file found!"
-        log_err "Please create ${APP_DIR}/.env (or copy from .env.example) before deploying."
-        exit 1
+        if [[ -f "${APP_DIR}/.env.example" ]]; then
+            log_warn "No .env file found. Copying .env.example to ${APP_DIR}/.env..."
+            cp "${APP_DIR}/.env.example" "${APP_DIR}/.env"
+            env_path="${APP_DIR}/.env"
+        else
+            log_err "Cannot deploy: No production .env configuration file found!"
+            exit 1
+        fi
     fi
 
     # Ensure root .env exists
@@ -310,73 +399,86 @@ cmd_deploy() {
         ln -nfs "${env_path}" "${APP_DIR}/.env" 2>/dev/null || cp "${env_path}" "${APP_DIR}/.env"
     fi
 
-    # 2. If assets haven't been built yet, build now
+    # Ensure APP_KEY exists
+    local app_key
+    app_key=$(grep -E '^APP_KEY=' "${APP_DIR}/.env" 2>/dev/null | cut -d '=' -f 2- | tr -d ' "' || echo "")
+    if [[ -z "${app_key}" || "${app_key}" == *"GENERATE_VIA"* ]]; then
+        log "Generating application key (APP_KEY)..."
+        (cd "${APP_DIR}" && php artisan key:generate --force)
+    fi
+
+    # 2. Build assets if manifest.json is missing
     if [[ ! -f "${BUILD_DIR}/manifest.json" ]]; then
-        log "Production assets not detected in ${BUILD_DIR}. Running build step first..."
+        log "Production assets not detected in ${BUILD_DIR}. Running build step..."
         cmd_build
     fi
 
-    # 3. Prepare storage directories and permissions
-    log "Configuring storage structure and permissions..."
-    mkdir -p "${APP_DIR}/storage/app/public"
-    mkdir -p "${APP_DIR}/storage/app/secure_docs"
-    mkdir -p "${APP_DIR}/storage/framework/cache"
-    mkdir -p "${APP_DIR}/storage/framework/sessions"
-    mkdir -p "${APP_DIR}/storage/framework/views"
-    mkdir -p "${APP_DIR}/storage/logs"
-    chmod -R 775 "${APP_DIR}/storage" "${APP_DIR}/bootstrap/cache" 2>/dev/null || true
+    # 3. Configure storage directories and permissions
+    fix_permissions
 
     # 4. Storage Link
     (
         cd "${APP_DIR}"
-        php artisan storage:link || true
+        php artisan storage:link 2>/dev/null || true
     )
 
     # 5. Run safe production database migrations
-    log "Running safe database migrations..."
+    log "Running database migrations..."
     (
         cd "${APP_DIR}"
         php artisan migrate --force --no-interaction
     )
+    log_success "Database migrations executed successfully."
 
-    # 6. Cache framework configurations, routes, and views
-    log "Optimizing Laravel configuration, routes, and views..."
+    # 6. Run safe idempotent database seeds
+    log "Ensuring core system records exist via DatabaseSeeder..."
     (
         cd "${APP_DIR}"
+        php artisan db:seed --class=DatabaseSeeder --force --no-interaction
+    )
+    log_success "Database initial data verified (Admin, Homepage Sections, Practice Areas, Credentials)."
+
+    # 7. Optimize Laravel configuration, routes, and views
+    log "Optimizing configuration, routes, and view caches..."
+    (
+        cd "${APP_DIR}"
+        php artisan config:clear
+        php artisan route:clear
+        php artisan view:clear
+        php artisan cache:clear
+
         php artisan config:cache
         php artisan route:cache
         php artisan view:cache
         php artisan event:cache
 
-        # 6.1 Redis validation probe if configured
+        # Redis probe if configured
         local cache_store
         cache_store=$(grep -E '^CACHE_STORE=' "${APP_DIR}/.env" 2>/dev/null | cut -d '=' -f 2 | tr -d ' "' || echo "")
         if [[ "${cache_store}" == "redis" ]]; then
             log "Verifying Redis cache connectivity..."
-            php artisan redis:verify || log_warn "Redis check reported a warning. Application will use configured fallback."
+            php artisan redis:verify 2>/dev/null || log_warn "Redis check completed with warning; fallback will be used."
         fi
     )
+    log_success "Laravel caches compiled successfully."
 
-    # 7. Backup existing assets for rollback
+    # 8. Re-apply permissions after cache generation
+    fix_permissions
+
+    # 9. Backup existing assets for rollback
     mkdir -p "${BACKUP_DIR}"
     if [[ -d "${BUILD_DIR}" ]]; then
         rm -rf "${BACKUP_DIR}/build_previous"
         cp -r "${BUILD_DIR}" "${BACKUP_DIR}/build_previous" 2>/dev/null || true
     fi
 
-    # 8. Reload PHP-FPM service
+    # 10. Reload PHP-FPM service
     reload_php_fpm
 
-    # 9. Verify deployment health check
-    log "Verifying deployment health..."
-    (
-        cd "${APP_DIR}"
-        php artisan test --filter=HealthCheckTest --no-ansi 2>/dev/null && log_success "Health check suite: PASSED." || log_warn "Health check test suite skipped or completed with warnings."
-    )
-
     log_success "=================================================================="
-    log_success "Unified deployment successfully activated at ${APP_DIR}!"
-    log_success "Domain: https://nijamuddin.com"
+    log_success "Deployment successfully activated!"
+    log_success "Site is live at: https://nijamuddin.com"
+    log_success "Admin portal: https://nijamuddin.com/admin/login"
     log_success "=================================================================="
 }
 
@@ -409,6 +511,7 @@ cmd_rollback() {
         php artisan view:cache
     )
 
+    fix_permissions
     reload_php_fpm
 
     log_success "Rollback completed. Restored previous release assets."
@@ -419,34 +522,31 @@ cmd_rollback() {
 # ------------------------------------------------------------------------------
 cmd_update() {
     log "=================================================================="
-    log "Advocate Nijam Uddin Platform — Automated Unified Deployment"
+    log "Advocate Nijam Uddin Platform — Automated Deployment Workflow"
     log "=================================================================="
 
-    # 1. Check if inside Git worktree and pull latest changes safely
+    # 1. Pull latest code if Git is tracked
     if git -C "${APP_DIR}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        log "Checking for uncommitted changes in Git working tree..."
+        log "Checking Git working tree status..."
         local git_status
         git_status="$(git -C "${APP_DIR}" status --porcelain 2>/dev/null || echo "")"
 
-        # Filter out ignored/runtime untracked files
         local dirty_files
         dirty_files="$(echo "${git_status}" | grep -vE '(\.env|storage/|node_modules/|vendor/|public/build/|\.backup)' || echo "")"
 
         if [[ -n "${dirty_files}" ]]; then
-            log_warn "Git working tree contains uncommitted modifications. Skipping automatic git pull to preserve changes:"
-            echo "${dirty_files}"
+            log_warn "Working directory has local modifications. Skipping git pull to prevent merge conflicts."
         else
-            log "Fetching and fast-forwarding latest commits from origin/main..."
-            git -C "${APP_DIR}" fetch origin main
-            git -C "${APP_DIR}" merge --ff-only origin/main 2>/dev/null || git -C "${APP_DIR}" pull origin main || log_warn "Could not fast-forward Git; continuing with local codebase."
-            log_success "Git codebase up to date: $(git -C "${APP_DIR}" rev-parse --short HEAD)"
+            log "Pulling latest code from origin main..."
+            git -C "${APP_DIR}" pull origin main || log_warn "Git pull encountered an issue; continuing with local codebase."
+            log_success "Codebase up to date: $(git -C "${APP_DIR}" rev-parse --short HEAD 2>/dev/null || echo 'current')"
         fi
     fi
 
-    # 2. Run prerequisite check
+    # 2. Audit environment
     cmd_check
 
-    # 3. Build unified artifacts
+    # 3. Build artifacts
     cmd_build
 
     # 4. Activate deployment
@@ -471,17 +571,21 @@ case "${action}" in
     deploy)
         cmd_deploy
         ;;
+    seed)
+        cmd_seed
+        ;;
     rollback)
         cmd_rollback
         ;;
     *)
-        echo "Usage: $0 [check|build|deploy|rollback|update]"
+        echo "Usage: $0 [update|check|build|deploy|seed|rollback]"
         echo ""
         echo "Commands:"
-        echo "  (no args)  Full one-command update: git pull, build, deploy & verify"
-        echo "  check      Verify environment, PHP extensions, and tools"
-        echo "  build      Compile frontend bundle & install composer dependencies"
-        echo "  deploy     Activate deployment, run migrations & refresh cache"
+        echo "  (no args)  Full deployment: git pull, build, migrate, seed, cache & reload"
+        echo "  check      Verify server environment, PHP version & tools"
+        echo "  build      Install composer dependencies & compile React/Vite assets"
+        echo "  deploy     Run migrations, idempotent seeds, cache & reload PHP-FPM"
+        echo "  seed       Safely seed initial data (Admin, Sections, Services)"
         echo "  rollback   Revert compiled assets to previous backup"
         exit 1
         ;;

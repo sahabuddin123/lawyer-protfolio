@@ -22,7 +22,13 @@ export const HomeSectionRenderer: React.FC<HomeSectionRendererProps> = ({
   data,
   onConsultationClick,
 }) => {
-  const sections = data.sections || [];
+  // Resilient fallback: If database sections are unseeded, render core verified sections
+  const sections = data.sections && data.sections.length > 0 ? data.sections : [
+    { id: 1, section_key: 'hero', title: { en: 'Advocate Nijam Uddin (Haq)', bn: 'এডভোকেট নিজাম উদ্দিন (হক)' }, sort_order: 1, is_enabled: true } as HomepageSection,
+    { id: 2, section_key: 'about_preview', title: { en: 'About Chambers', bn: 'চেম্বার পরিচিতি' }, sort_order: 2, is_enabled: true } as HomepageSection,
+    { id: 3, section_key: 'credentials', title: { en: 'Credentials', bn: 'সনদ ও মর্যাদা' }, sort_order: 3, is_enabled: true } as HomepageSection,
+    { id: 4, section_key: 'practice_areas', title: { en: 'Practice Areas', bn: 'আইনি ক্ষেত্র' }, sort_order: 4, is_enabled: true } as HomepageSection,
+  ];
 
   // Map section components by registered section_key
   const renderSectionByKey = (section: HomepageSection) => {
@@ -54,6 +60,7 @@ export const HomeSectionRenderer: React.FC<HomeSectionRendererProps> = ({
         );
 
       case 'about':
+      case 'about_preview':
         return (
           <AboutPreviewSection
             key={section.section_key}

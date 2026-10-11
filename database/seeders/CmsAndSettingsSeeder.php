@@ -527,7 +527,7 @@ class CmsAndSettingsSeeder extends Seeder
         ];
 
         foreach ($sections as $sec) {
-            HomepageSection::updateOrCreate(
+            HomepageSection::firstOrCreate(
                 ['section_key' => $sec['section_key']],
                 $sec
             );

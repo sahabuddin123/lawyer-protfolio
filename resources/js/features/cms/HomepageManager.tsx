@@ -47,6 +47,7 @@ export const HomepageManager: React.FC = () => {
     cta_label_en: '',
     cta_label_bn: '',
     cta_url: '',
+    limit: '',
     is_enabled: true,
   });
 
@@ -86,6 +87,7 @@ export const HomepageManager: React.FC = () => {
       cta_label_en: '',
       cta_label_bn: '',
       cta_url: '',
+      limit: '',
       is_enabled: true,
     });
     setIsCreateModalOpen(true);
@@ -118,6 +120,7 @@ export const HomepageManager: React.FC = () => {
       cta_label_en: ctaLabelEn,
       cta_label_bn: ctaLabelBn,
       cta_url: section.settings?.cta_url || '',
+      limit: section.settings?.limit ? String(section.settings.limit) : '',
       is_enabled: section.is_enabled,
     });
     setIsEditModalOpen(true);
@@ -189,6 +192,7 @@ export const HomepageManager: React.FC = () => {
         settings: {
           cta_label: { en: formData.cta_label_en, bn: formData.cta_label_bn },
           cta_url: formData.cta_url,
+          ...(formData.limit ? { limit: parseInt(formData.limit, 10) } : {}),
         },
       };
 
@@ -226,6 +230,7 @@ export const HomepageManager: React.FC = () => {
           ...editingSection.settings,
           cta_label: { en: formData.cta_label_en, bn: formData.cta_label_bn },
           cta_url: formData.cta_url,
+          ...(formData.limit ? { limit: parseInt(formData.limit, 10) } : {}),
         },
       };
 
@@ -317,9 +322,21 @@ export const HomepageManager: React.FC = () => {
                         <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 uppercase">
                           {sec.section_key}
                         </span>
+                        {sec.section_key === 'consultation_cta' && (
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-semibold uppercase">
+                            Global Footer CTA
+                          </span>
+                        )}
+                        {sec.settings?.limit && (
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">
+                            Limit: {sec.settings.limit}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-slate-500 truncate mt-0.5 max-w-xl">
-                        {typeof sec.content === 'object'
+                        {sec.section_key === 'consultation_cta'
+                          ? 'Synchronized with Global Call-to-Action. Rendered immediately above the footer on all public pages.'
+                          : typeof sec.content === 'object'
                           ? (sec.content as any)?.en || 'Custom landing section'
                           : sec.content || 'Custom landing section'}
                       </p>
@@ -462,7 +479,7 @@ export const HomepageManager: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
             <Input
               label="CTA Button Label (EN)"
               value={formData.cta_label_en}
@@ -481,7 +498,21 @@ export const HomepageManager: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, cta_url: e.target.value })}
               placeholder="e.g. /services"
             />
+            <Input
+              label="Display Limit"
+              type="number"
+              value={formData.limit}
+              onChange={(e) => setFormData({ ...formData, limit: e.target.value })}
+              placeholder="e.g. 6"
+            />
           </div>
+
+          {formData.section_key === 'consultation_cta' && (
+            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 leading-relaxed">
+              <span className="font-semibold block mb-0.5">Global Footer CTA Architecture</span>
+              This section configures the Global Call-to-Action rendered immediately above the footer across all public pages. Changes here automatically synchronize across the website.
+            </div>
+          )}
 
           <div className="flex justify-end space-x-2 pt-3 border-t border-slate-100">
             <Button
@@ -554,7 +585,7 @@ export const HomepageManager: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
             <Input
               label="CTA Button Label (EN)"
               value={formData.cta_label_en}
@@ -573,7 +604,21 @@ export const HomepageManager: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, cta_url: e.target.value })}
               placeholder="e.g. /contact"
             />
+            <Input
+              label="Display Limit"
+              type="number"
+              value={formData.limit}
+              onChange={(e) => setFormData({ ...formData, limit: e.target.value })}
+              placeholder="e.g. 6"
+            />
           </div>
+
+          {editingSection?.section_key === 'consultation_cta' && (
+            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 leading-relaxed">
+              <span className="font-semibold block mb-0.5">Global Footer CTA Architecture</span>
+              This section configures the Global Call-to-Action rendered immediately above the footer across all public pages. Changes here automatically synchronize across the website.
+            </div>
+          )}
 
           <div className="flex justify-end space-x-2 pt-3 border-t border-slate-100">
             <Button

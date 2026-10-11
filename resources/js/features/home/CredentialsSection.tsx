@@ -26,14 +26,19 @@ export const CredentialsSection: React.FC<CredentialsSectionProps> = ({
   const description =
     resolveLocalized(sectionConfig?.content, locale) || t.sections.credentialsDescription;
 
+  const actionLabel =
+    resolveLocalized(sectionConfig?.settings?.cta_label, locale) ||
+    t.sections.viewFullProfile;
+  const actionUrl = sectionConfig?.settings?.cta_url || '/about';
+
   return (
     <HomeSectionWrapper
       id="credentials"
       eyebrow={eyebrow}
       title={title}
       description={description}
-      actionLabel={t.sections.viewFullProfile}
-      actionUrl="/about"
+      actionLabel={actionLabel}
+      actionUrl={actionUrl}
       className="bg-background-secondary"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
