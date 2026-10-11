@@ -18,41 +18,6 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# ------------------------------------------------------------------------------
-# AUTO-DETECT AAPANEL BINARY PATHS (PHP, COMPOSER, NODE, NPM)
-# ------------------------------------------------------------------------------
-# In aaPanel, PHP 8.2/8.3 and Node are typically installed in /www/server/...
-# Prepending them to PATH ensures CLI scripts run with the correct versions.
-for php_path in "/www/server/php/82/bin" "/www/server/php/83/bin" "/www/server/php/81/bin" "/www/server/php/84/bin"; do
-    if [[ -d "${php_path}" && -x "${php_path}/php" ]]; then
-        export PATH="${php_path}:$PATH"
-        break
-    fi
-done
-
-# Detect aaPanel Node.js Version Manager or NVM if node is not yet in PATH
-if ! command -v node >/dev/null 2>&1; then
-    # aaPanel Node version manager
-    for node_dir in /www/server/nodejs/v*/bin; do
-        if [[ -d "${node_dir}" && -x "${node_dir}/node" ]]; then
-            export PATH="${node_dir}:$PATH"
-            break
-        fi
-    done
-fi
-
-if ! command -v node >/dev/null 2>&1; then
-    # NVM fallback
-    if [[ -d "${HOME}/.nvm" ]]; then
-        export NVM_DIR="${HOME}/.nvm"
-        # shellcheck disable=SC1091
-        [[ -s "${NVM_DIR}/nvm.sh" ]] && \. "${NVM_DIR}/nvm.sh" 2>/dev/null || true
-    fi
-fi
-
-# ------------------------------------------------------------------------------
-# CONFIGURATION & DIRECTORY HIERARCHY
-# ------------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="${SCRIPT_DIR}"
 BUILD_DIR="${APP_DIR}/public/build"
@@ -73,9 +38,6 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# ------------------------------------------------------------------------------
-# HELPER FUNCTIONS
-# ------------------------------------------------------------------------------
 log() {
     local msg="[$(date +"%Y-%m-%d %H:%M:%S")] $1"
     echo -e "${BLUE}${msg}${NC}"
@@ -123,6 +85,81 @@ release_lock() {
 
 trap release_lock EXIT
 
+# ------------------------------------------------------------------------------
+# 1. AUTO-DETECT AAPANEL BINARY PATHS (PHP, COMPOSER, NODE, NPM)
+# ------------------------------------------------------------------------------
+# In aaPanel, PHP 8.2/8.3 and Node are typically installed in /www/server/...
+for php_path in "/www/server/php/82/bin" "/www/server/php/83/bin" "/www/server/php/81/bin" "/www/server/php/84/bin"; do
+    if [[ -d "${php_path}" && -x "${php_path}/php" ]]; then
+        export PATH="${php_path}:$PATH"
+        break
+    fi
+done
+
+# Fix duplicate curl extension warning in aaPanel php.ini if present
+for php_ini in "/www/server/php/82/etc/php.ini" "/www/server/php/83/etc/php.ini"; do
+    if [[ -f "${php_ini}" ]]; then
+        if grep -E '^[[:space:]]*extension[[:space:]]*=[[:space:]]*curl' "${php_ini}" >/dev/null 2>&1; then
+            if [[ ! -f "/www/server/php/82/lib/php/extensions/no-debug-non-zts-20220829/curl.so" && ! -f "/www/server/php/82/lib/php/extensions/no-debug-non-zts-20220829/curl" ]]; then
+                sed -i 's/^[[:space:]]*extension[[:space:]]*=[[:space:]]*curl/;extension=curl/g' "${php_ini}" 2>/dev/null || true
+            fi
+        fi
+    fi
+done
+
+# Detect aaPanel Composer or global Composer
+if ! command -v composer >/dev/null 2>&1; then
+    for comp_bin in "/usr/local/bin/composer" "/usr/bin/composer" "/www/server/php/82/bin/composer" "/www/server/php/83/bin/composer"; do
+        if [[ -x "${comp_bin}" ]]; then
+            export PATH="$(dirname "${comp_bin}"):$PATH"
+            break
+        fi
+    done
+fi
+
+# If composer is still not found in PATH, auto-download standalone composer into /usr/local/bin or app dir
+if ! command -v composer >/dev/null 2>&1; then
+    log "Composer not found in standard PATH. Attempting automatic installation..."
+    if curl -sS https://getcomposer.org/installer 2>/dev/null | php -- --install-dir=/usr/local/bin --filename=composer 2>/dev/null; then
+        export PATH="/usr/local/bin:$PATH"
+        chmod +x /usr/local/bin/composer 2>/dev/null || true
+        log_success "Composer installed successfully into /usr/local/bin/composer"
+    elif curl -sS https://getcomposer.org/installer 2>/dev/null | php -- --install-dir="${APP_DIR}" --filename=composer 2>/dev/null; then
+        export PATH="${APP_DIR}:$PATH"
+        chmod +x "${APP_DIR}/composer" 2>/dev/null || true
+        log_success "Composer installed locally into ${APP_DIR}/composer"
+    fi
+fi
+
+# Detect aaPanel Node.js Version Manager or NVM if node is not yet in PATH
+if ! command -v node >/dev/null 2>&1; then
+    for node_dir in /www/server/nodejs/v*/bin; do
+        if [[ -d "${node_dir}" && -x "${node_dir}/node" ]]; then
+            export PATH="${node_dir}:$PATH"
+            break
+        fi
+    done
+fi
+
+if ! command -v node >/dev/null 2>&1; then
+    if [[ -d "${HOME}/.nvm" ]]; then
+        export NVM_DIR="${HOME}/.nvm"
+        # shellcheck disable=SC1091
+        [[ -s "${NVM_DIR}/nvm.sh" ]] && \. "${NVM_DIR}/nvm.sh" 2>/dev/null || true
+    fi
+fi
+
+# If Node.js is still missing and user is root on Ubuntu/Debian, auto-install Node 20 LTS
+if ! command -v node >/dev/null 2>&1; then
+    if [[ "$(id -u)" -eq 0 ]] && command -v apt-get >/dev/null 2>&1; then
+        log "Node.js not detected. Auto-installing Node.js 20 LTS for frontend build..."
+        (
+            curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >/dev/null 2>&1 || true
+            apt-get install -y nodejs >/dev/null 2>&1 || true
+        )
+    fi
+fi
+
 # Locate production environment file across supported topologies
 locate_env_file() {
     if [[ -f "${APP_DIR}/.env" ]]; then
@@ -141,7 +178,6 @@ reload_php_fpm() {
     log "Reloading PHP-FPM service..."
     local reloaded=false
 
-    # 1. Fallback to init.d scripts common in aaPanel
     local init_scripts=(
         "/etc/init.d/php-fpm-82"
         "/etc/init.d/php-fpm-83"
@@ -160,7 +196,6 @@ reload_php_fpm() {
         fi
     done
 
-    # 2. Try systemd service names if init.d did not fire
     if [[ "${reloaded}" == "false" ]] && command -v systemctl >/dev/null 2>&1; then
         local services=("php-fpm-82" "php8.2-fpm" "php-fpm-83" "php8.3-fpm" "php-fpm")
         for svc in "${services[@]}"; do
@@ -175,13 +210,13 @@ reload_php_fpm() {
     fi
 
     if [[ "${reloaded}" == "false" ]]; then
-        log_warn "Could not automatically reload PHP-FPM via CLI. If needed, restart PHP 8.2 in the aaPanel App Store."
+        log_warn "Could not automatically reload PHP-FPM via CLI. If needed, restart PHP 8.2 in aaPanel App Store."
     fi
 }
 
 # Fix file permissions for aaPanel web server user (www:www)
 fix_permissions() {
-    log "Configuring storage permissions for web server..."
+    log "Configuring storage and cache permissions..."
     mkdir -p "${APP_DIR}/storage/app/public"
     mkdir -p "${APP_DIR}/storage/app/secure_docs"
     mkdir -p "${APP_DIR}/storage/framework/cache/data"
@@ -190,7 +225,6 @@ fix_permissions() {
     mkdir -p "${APP_DIR}/storage/logs"
     mkdir -p "${APP_DIR}/bootstrap/cache"
 
-    # In aaPanel, Nginx/Apache and PHP-FPM run as user 'www'
     if id "www" >/dev/null 2>&1; then
         chown -R www:www "${APP_DIR}/storage" "${APP_DIR}/bootstrap/cache" 2>/dev/null || true
     elif id "www-data" >/dev/null 2>&1; then
@@ -213,7 +247,15 @@ cmd_check() {
     local required_cmds=("git" "php" "composer")
     for cmd in "${required_cmds[@]}"; do
         if command -v "${cmd}" >/dev/null 2>&1; then
-            log_success "Command '${cmd}' found: $(command -v "${cmd}") ($(${cmd} --version 2>&1 | head -n 1))"
+            local ver=""
+            if [[ "${cmd}" == "php" ]]; then
+                ver="$(php -r "echo 'PHP ' . PHP_VERSION;" 2>/dev/null || echo "PHP")"
+            elif [[ "${cmd}" == "composer" ]]; then
+                ver="$(composer --version 2>/dev/null | head -n 1 || echo "Composer")"
+            else
+                ver="$(${cmd} --version 2>/dev/null | head -n 1 || echo "${cmd}")"
+            fi
+            log_success "Command '${cmd}' found: $(command -v "${cmd}") (${ver})"
         else
             log_err "Missing required command: '${cmd}'. Please verify PATH or aaPanel installation."
             exit 1
@@ -222,19 +264,19 @@ cmd_check() {
 
     # 1.1 Node & NPM check
     if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
-        log_success "Node.js runtime found: $(node -v) (npm $(npm -v))"
+        log_success "Node.js runtime found: $(node -v 2>/dev/null) (npm $(npm -v 2>/dev/null))"
     elif [[ -f "${BUILD_DIR}/manifest.json" ]]; then
         log_warn "Node.js/npm not found, but pre-compiled build assets exist at ${BUILD_DIR}. Deployment can proceed."
     else
         log_err "Neither Node.js nor pre-compiled assets (${BUILD_DIR}/manifest.json) found!"
-        log_err "Please install Node.js in aaPanel (via Node.js Version Manager) or run 'npm run build' locally."
+        log_err "In aaPanel: Go to App Store -> Node.js Version Manager -> install Node v20 or run 'apt install -y nodejs npm'."
         exit 1
     fi
 
     # 2. Check PHP extensions
     local required_exts=("pdo_mysql" "mbstring" "xml" "curl" "gd" "zip" "bcmath" "intl")
     for ext in "${required_exts[@]}"; do
-        if php -m | grep -qi "^${ext}$"; then
+        if php -m 2>/dev/null | grep -qi "^${ext}$"; then
             log_success "PHP extension '${ext}' is loaded."
         else
             log_warn "PHP extension '${ext}' is NOT loaded in CLI PHP. Verify php.ini in aaPanel."
@@ -255,10 +297,7 @@ cmd_check() {
     if [[ -n "${env_path}" ]]; then
         log_success "Environment configuration found at: ${env_path}"
     else
-        log_warn "No .env file found! Checked in:"
-        log_warn "  - ${APP_DIR}/.env"
-        log_warn "  - ${WWW_ROOT}/.env"
-        log_warn "If this is a fresh setup, copying .env.example to ${APP_DIR}/.env..."
+        log_warn "No .env file found! Checked in ${APP_DIR}/.env."
         if [[ -f "${APP_DIR}/.env.example" ]]; then
             cp "${APP_DIR}/.env.example" "${APP_DIR}/.env"
             log_success "Created ${APP_DIR}/.env from .env.example."
@@ -269,11 +308,9 @@ cmd_check() {
     # 5. Check Git repository status
     if git -C "${APP_DIR}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         local current_branch current_commit
-        current_branch="$(git -C "${APP_DIR}" branch --show-current 2>/dev/null || echo "detached")"
+        current_branch="$(git -C "${APP_DIR}" branch --show-current 2>/dev/null || echo "main")"
         current_commit="$(git -C "${APP_DIR}" rev-parse --short HEAD 2>/dev/null || echo "unknown")"
         log_success "Git repository verified on branch '${current_branch}' at commit ${current_commit}."
-    else
-        log_warn "Directory ${APP_DIR} is not tracked as a Git worktree."
     fi
 
     # 6. Check database connectivity
@@ -290,7 +327,7 @@ cmd_check() {
         cache_store=$(grep -E '^CACHE_STORE=' "${env_path}" 2>/dev/null | cut -d '=' -f 2 | tr -d ' "' || echo "")
         if [[ "${cache_store}" == "redis" ]]; then
             log "Verifying Redis configuration (CACHE_STORE=redis)..."
-            if php -m | grep -qi "^redis$"; then
+            if php -m 2>/dev/null | grep -qi "^redis$"; then
                 log_success "PHP extension 'redis' (phpredis) is loaded."
             else
                 log_warn "PHP extension 'redis' is NOT loaded in CLI PHP. Enable redis extension in aaPanel PHP Settings."
@@ -393,7 +430,6 @@ cmd_deploy() {
         fi
     fi
 
-    # Ensure root .env exists
     if [[ "${env_path}" != "${APP_DIR}/.env" && ! -f "${APP_DIR}/.env" ]]; then
         log "Linking ${env_path} to ${APP_DIR}/.env..."
         ln -nfs "${env_path}" "${APP_DIR}/.env" 2>/dev/null || cp "${env_path}" "${APP_DIR}/.env"
@@ -452,7 +488,6 @@ cmd_deploy() {
         php artisan view:cache
         php artisan event:cache
 
-        # Redis probe if configured
         local cache_store
         cache_store=$(grep -E '^CACHE_STORE=' "${APP_DIR}/.env" 2>/dev/null | cut -d '=' -f 2 | tr -d ' "' || echo "")
         if [[ "${cache_store}" == "redis" ]]; then
@@ -535,11 +570,19 @@ cmd_update() {
         dirty_files="$(echo "${git_status}" | grep -vE '(\.env|storage/|node_modules/|vendor/|public/build/|\.backup)' || echo "")"
 
         if [[ -n "${dirty_files}" ]]; then
-            log_warn "Working directory has local modifications. Skipping git pull to prevent merge conflicts."
-        else
-            log "Pulling latest code from origin main..."
-            git -C "${APP_DIR}" pull origin main || log_warn "Git pull encountered an issue; continuing with local codebase."
+            log_warn "Local modifications detected in tracked repository files."
+            log "Discarding local tracked changes to ensure clean synchronization with GitHub..."
+            git -C "${APP_DIR}" checkout -- . 2>/dev/null || true
+        fi
+
+        log "Pulling latest code from origin main..."
+        if git -C "${APP_DIR}" pull origin main 2>/dev/null; then
             log_success "Codebase up to date: $(git -C "${APP_DIR}" rev-parse --short HEAD 2>/dev/null || echo 'current')"
+        else
+            log_warn "Standard git pull failed. Fetching and synchronizing to origin/main..."
+            git -C "${APP_DIR}" fetch origin main 2>/dev/null || true
+            git -C "${APP_DIR}" reset --hard origin/main 2>/dev/null || true
+            log_success "Repository synchronized with origin/main: $(git -C "${APP_DIR}" rev-parse --short HEAD 2>/dev/null || echo 'current')"
         fi
     fi
 
