@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { HomeSectionWrapper } from './HomeSectionWrapper';
 import { VideoCard } from '@/components/cards/VideoCard';
 import { VideoModal } from '@/components/modals/VideoModal';
@@ -17,6 +18,7 @@ export const VideosSection: React.FC<VideosSectionProps> = ({
   sectionConfig,
 }) => {
   const { t, locale } = useTranslation();
+  const navigate = useNavigate();
   const [activeVideo, setActiveVideo] = useState<VideoItem | null>(null);
 
   if (!videos || videos.length === 0) {
@@ -42,12 +44,24 @@ export const VideosSection: React.FC<VideosSectionProps> = ({
           const itemTitle = resolveLocalized(item.title, locale);
           const categoryName = item.category?.name
             ? resolveLocalized(item.category.name, locale)
-            : 'Judicial Discourse';
+            : (locale === 'bn' ? 'আইনি শিক্ষামূলক আলোচনা' : 'Legal Explainer');
+          const isEducational = item.platform === 'external' || !item.video_id;
           const thumbnailUrl =
             item.thumbnail?.variants?.medium ||
             item.thumbnail?.url ||
-            (item.video_id ? `https://img.youtube.com/vi/${item.video_id}/mqdefault.jpg` : '');
+            (item.video_id ? `https://img.youtube.com/vi/${item.video_id}/mqdefault.jpg` : undefined);
           const dateStr = item.published_date || item.date || '';
+          const actionLabel = isEducational
+            ? (locale === 'bn' ? 'আইনি বিষয়বস্তু দেখুন' : 'Explore Legal Topic')
+            : (locale === 'bn' ? 'ভিডিও দেখুন' : 'Watch Broadcast');
+
+          const handleClick = () => {
+            if (isEducational) {
+              navigate(`/videos/${item.slug}`);
+            } else {
+              setActiveVideo(item);
+            }
+          };
 
           return (
             <VideoCard
@@ -57,7 +71,9 @@ export const VideosSection: React.FC<VideosSectionProps> = ({
               category={categoryName}
               duration={item.duration || undefined}
               date={dateStr}
-              onPlay={() => setActiveVideo(item)}
+              isEducational={isEducational}
+              actionLabel={actionLabel}
+              onPlay={handleClick}
             />
           );
         })}

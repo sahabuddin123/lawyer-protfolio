@@ -44,7 +44,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({
             album.cover_image?.variants?.medium ||
             album.cover_image?.url ||
             album.cover_image_url ||
-            '/images/gallery-placeholder.jpg';
+            '/images/lawyer-chamber-library.jpg';
           const dateStr = album.event_date || (album.published_at ? new Date(album.published_at).toLocaleDateString() : '');
 
           return (

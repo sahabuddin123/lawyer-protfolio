@@ -39,11 +39,12 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({
   const philosophy = resolveLocalized(about.philosophy, locale);
 
   const photoUrl =
+    sectionConfig?.settings?.image_url ||
     about.court_robes_photo?.variants?.medium ||
     about.court_robes_photo?.url ||
     about.avatar?.variants?.medium ||
     about.avatar?.url ||
-    '/images/portrait-nijamuddin.jpg';
+    '/images/lawyer-chamber-library.jpg';
 
   const actionLabel =
     resolveLocalized(sectionConfig?.settings?.cta_label, locale) ||

@@ -195,9 +195,9 @@ export const AboutPage: React.FC = () => {
                 {/* Decorative Gold Frame Accent */}
                 <div className="absolute -inset-2 rounded-xl bg-gradient-to-tr from-legal-gold-600/30 via-transparent to-legal-gold-500/20 blur-sm" />
                 <div className="relative overflow-hidden rounded-lg border border-legal-gold-500/40 bg-legal-slate-900 shadow-2xl">
-                  {profile.profile_photo?.url ? (
+                  {(profile.court_robes_photo?.url || profile.profile_photo?.url || '/images/portrait-nijamuddin.jpg') ? (
                     <img
-                      src={profile.profile_photo.url}
+                      src={profile.court_robes_photo?.url || profile.profile_photo?.url || '/images/portrait-nijamuddin.jpg'}
                       alt={resolveText(profile.name)}
                       className="h-auto w-full object-cover transition duration-300"
                     />

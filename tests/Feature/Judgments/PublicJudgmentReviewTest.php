@@ -24,6 +24,8 @@ class PublicJudgmentReviewTest extends TestCase
         parent::setUp();
         $this->seed(RolesAndPermissionsSeeder::class);
 
+        JudgmentReview::query()->delete();
+
         $admin = User::factory()->create(['email' => 'public_judgment_seed@nijamuddin.com']);
 
         $this->practiceArea = PracticeArea::create([

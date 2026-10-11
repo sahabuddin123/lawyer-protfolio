@@ -66,7 +66,9 @@ class Media extends Model
     {
         $path = $this->directory . '/' . $this->filename;
         if ($this->disk === 'public') {
-            return Storage::disk('public')->url($path);
+            $url = Storage::disk('public')->url($path);
+            $parsedPath = parse_url($url, PHP_URL_PATH);
+            return $parsedPath ?: ('/storage/' . $path);
         }
 
         return $path;

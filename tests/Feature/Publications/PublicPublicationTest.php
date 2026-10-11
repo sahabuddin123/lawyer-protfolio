@@ -28,6 +28,8 @@ class PublicPublicationTest extends TestCase
         parent::setUp();
         $this->seed(RolesAndPermissionsSeeder::class);
 
+        Publication::query()->delete();
+
         $this->adminUser = User::factory()->create(['name' => 'Admin User', 'email' => 'admin_pub_pub_test@nijamuddin.com']);
         $this->adminUser->assignRole('super_admin');
 

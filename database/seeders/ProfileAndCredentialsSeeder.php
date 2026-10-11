@@ -4,9 +4,11 @@ namespace Database\Seeders;
 
 use App\Models\Credential;
 use App\Models\Education;
+use App\Models\Media;
 use App\Models\Profile;
 use App\Models\SeoMeta;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class ProfileAndCredentialsSeeder extends Seeder
 {
@@ -15,6 +17,65 @@ class ProfileAndCredentialsSeeder extends Seeder
      */
     public function run(): void
     {
+        // 0. Ensure Lawyer Photos are Registered as Media
+        $courtRobesMedia = Media::firstOrCreate(
+            ['filename' => 'lawyer-court-robes.jpg'],
+            [
+                'uuid' => (string) Str::uuid(),
+                'disk' => 'public',
+                'directory' => 'lawyer',
+                'original_name' => 'advocate-nijam-uddin-court-robes.jpg',
+                'mime_type' => 'image/jpeg',
+                'extension' => 'jpg',
+                'size_bytes' => 121871,
+                'width' => 800,
+                'height' => 1066,
+                'alt_text' => [
+                    'en' => 'Advocate Nijam Uddin (Haq), Supreme Court of Bangladesh in Court Robes',
+                    'bn' => 'অ্যাডভোকেট নিজাম উদ্দিন (হক), বাংলাদেশ সুপ্রিম কোর্ট — আইনজীবী পোশাকে',
+                ],
+                'caption' => [
+                    'en' => 'Official Supreme Court Advocate Portrait',
+                    'bn' => 'সুপ্রিম কোর্ট তালিকাভুক্ত আইনজীবী প্রতিকৃতি',
+                ],
+                'variants' => [
+                    'thumbnail' => '/images/lawyer-court-robes.jpg',
+                    'medium' => '/images/lawyer-court-robes.jpg',
+                    'large' => '/images/lawyer-court-robes.jpg',
+                ],
+                'uploaded_by' => 1,
+            ]
+        );
+
+        $executiveMedia = Media::firstOrCreate(
+            ['filename' => 'lawyer-executive.jpg'],
+            [
+                'uuid' => (string) Str::uuid(),
+                'disk' => 'public',
+                'directory' => 'lawyer',
+                'original_name' => 'advocate-nijam-uddin-executive.jpg',
+                'mime_type' => 'image/jpeg',
+                'extension' => 'jpg',
+                'size_bytes' => 130898,
+                'width' => 800,
+                'height' => 1013,
+                'alt_text' => [
+                    'en' => 'Advocate Nijam Uddin (Haq) Executive Portrait',
+                    'bn' => 'অ্যাডভোকেট নিজাম উদ্দিন (হক) প্রফেশনাল পোর্ট্রেট',
+                ],
+                'caption' => [
+                    'en' => 'Advocate Nijam Uddin (Haq), Supreme Court of Bangladesh',
+                    'bn' => 'অ্যাডভোকেট নিজাম উদ্দিন (হক), বাংলাদেশ সুপ্রিম কোর্ট',
+                ],
+                'variants' => [
+                    'thumbnail' => '/images/lawyer-executive.jpg',
+                    'medium' => '/images/lawyer-executive.jpg',
+                    'large' => '/images/lawyer-executive.jpg',
+                ],
+                'uploaded_by' => 1,
+            ]
+        );
+
         // 1. Authoritative Profile Baseline (Strictly verified facts only)
         $profile = Profile::updateOrCreate(
             ['id' => 1],
@@ -40,8 +101,8 @@ class ProfileAndCredentialsSeeder extends Seeder
                     'bn' => '<p>অ্যাডভোকেট নিজাম উদ্দিন (হক) বাংলাদেশ সুপ্রিম কোর্টের একজন তালিকাভুক্ত আইনজীবী। চট্টগ্রাম বিশ্ববিদ্যালয় থেকে এলএল.বি. (অনার্স) এবং এলএল.এম. ডিগ্রি অর্জনের মাধ্যমে তিনি গভীর বিশ্লেষণধর্মী আইনশাস্ত্র ও নীতিবান আইনি লড়াইয়ে নিজেকে প্রতিষ্ঠিত করেছেন।</p><p>তাঁর আইনি কার্যক্রম সাংবিধানিক বিশ্বস্ততা, কার্যপ্রণালীগত ন্যায়বিচার এবং বিচারিক নজিরের তাত্ত্বিক পর্যালোচনার ওপর প্রতিষ্ঠিত। বাংলাদেশ বার কাউন্সিলে সনদপ্রাপ্ত ও তালিকাভুক্ত হয়ে তিনি দায়িত্বশীল আইনি পরামর্শ প্রদানের পাশাপাশি দেশের আইন সাহিত্যের সমৃদ্ধিতে সক্রিয় অবদান রেখে চলেছেন।</p>',
                 ],
                 'status' => 'published',
-                'profile_photo_id' => null,
-                'court_robes_photo_id' => null,
+                'profile_photo_id' => $executiveMedia->id,
+                'court_robes_photo_id' => $courtRobesMedia->id,
                 'signature_photo_id' => null,
                 'bar_council_enrollment' => 'Enrolled / Certified with Bangladesh Bar Council',
                 'high_court_enrollment' => null,
