@@ -17,7 +17,7 @@ The platform pairs a high-performance **React + TypeScript + Vite** frontend wit
 
 * **Production URL:** [https://nijamuddin.com](https://nijamuddin.com)
 * **Repository:** [https://github.com/sahabuddin123/lawyer-protfolio](https://github.com/sahabuddin123/lawyer-protfolio)
-* **Architecture:** Decoupled SPA (React) + REST API (Laravel) under a unified production domain
+* **Architecture:** Unified Laravel 11 Application with integrated React 19 + TypeScript + Vite frontend
 
 ---
 
@@ -187,45 +187,57 @@ Administrative access is strictly protected and isolated from public users.
 
 ```
 nijamuddin.com/
-├── .env.example                     # Production environment variable template
-├── .gitignore                       # Repository exclusion rules
-├── deploy.sh                        # Automated aaPanel/VPS deployment script
-├── README.md                        # Project documentation (this file)
-│
-├── backend/                         # Laravel 11 Application
-│   ├── app/
-│   │   ├── Console/Commands/        # Artisan CLI commands (admin:create-super-admin)
-│   │   ├── Http/Controllers/Api/V1/ # REST API Controllers (Public, Admin, Auth)
-│   │   ├── Http/Requests/           # Form request validations & sanitization
-│   │   ├── Http/Resources/V1/       # JSON API serialization envelopes
-│   │   ├── Models/                  # Eloquent models with HasTranslations trait
-│   │   ├── Services/                # Business logic, CMS Cache, Media Service
-│   │   └── Traits/                  # Reusable Eloquent traits (HasTranslations)
-│   ├── config/                      # Laravel config files (auth, cors, sanctum)
-│   ├── database/
-│   │   ├── migrations/              # Database schema migrations (24 migrations)
-│   │   └── seeders/                 # Seeders (SuperAdmin, Roles, CMS, Profile)
-│   ├── routes/
-│   │   └── api.php                  # API v1 route declarations
-│   ├── tests/
-│   │   └── Feature/                 # Feature test suites (316 passing tests)
-│   ├── composer.json                # PHP dependency declarations
-│   └── phpunit.xml                  # Automated testing configuration
-│
-└── frontend/                        # React + Vite Application
-    ├── src/
-    │   ├── api/                     # Axios API clients (auth, cms, public)
-    │   ├── components/              # UI building blocks (cards, buttons, modals)
-    │   ├── features/                # Domain modules (auth, cms, profile, media)
-    │   ├── i18n/                    # Localization dictionaries (en.ts, bn.ts)
-    │   ├── layouts/                 # RootLayout (Navbar, Footer, Consultation Modal)
-    │   ├── pages/                   # Route view pages (Public and AdminLoginPage)
-    │   ├── routes/                  # React Router configuration
-    │   ├── types/                   # TypeScript interfaces & API schemas
-    │   └── utils/                   # Helper functions, formatters, cn utility
-    ├── package.json                 # Node dependencies and scripts
-    ├── tsconfig.json                # TypeScript compiler configuration
-    └── vite.config.ts               # Vite bundler build pipeline configuration
+├── app/                             # Laravel 11 Application Logic
+│   ├── Console/Commands/            # Artisan CLI commands (admin:create-super-admin)
+│   ├── Http/Controllers/Api/V1/     # REST API Controllers (Public, Admin, Auth)
+│   ├── Http/Requests/               # Form request validations & sanitization
+│   ├── Http/Resources/V1/           # JSON API serialization envelopes
+│   ├── Models/                      # Eloquent models with HasTranslations trait
+│   ├── Services/                    # Business logic, CMS Cache, Media Service
+│   └── Traits/                      # Reusable Eloquent traits (HasTranslations)
+├── bootstrap/                       # Laravel bootstrapper (app.php)
+├── config/                          # Central configuration (app, auth, cors, sanctum)
+├── database/                        # Migrations (24), seeders, and factories
+├── public/                          # Production Web Root (Target Nginx Document Root)
+│   ├── build/                       # Vite compiled production bundles & manifest.json
+│   ├── favicon.svg                  # SVG site icon
+│   ├── icons.svg                    # SVG sprite asset
+│   ├── index.php                    # Laravel request entry point
+│   └── storage -> ../storage/app/public # Public disk symlink
+├── resources/
+│   ├── css/                         # Tailwind master stylesheet (app.css)
+│   ├── js/                          # React 19 + TypeScript Application Source
+│   │   ├── api/                     # Axios API clients (auth, cms, public)
+│   │   ├── components/              # UI components (atoms, molecules, modals)
+│   │   ├── features/                # Domain features (auth, cms, profile, etc.)
+│   │   ├── i18n/                    # Localization dictionaries (en.ts, bn.ts, context)
+│   │   ├── layouts/                 # RootLayout (Navbar, Footer, Consultation Modal)
+│   │   ├── pages/                   # View pages (Public routes & Admin CMS)
+│   │   ├── routes/                  # React Router 7 route definitions
+│   │   ├── types/                   # TypeScript interfaces & API schemas
+│   │   ├── utils/                   # Helpers, formatters, and cn utility
+│   │   ├── App.tsx                  # Root React component
+│   │   └── main.tsx                 # React entry point mounting to DOM (#root)
+│   └── views/
+│       └── app.blade.php            # Master Blade template with @vite directives
+├── routes/
+│   ├── api.php                      # Versioned REST API routes (/api/v1/*)
+│   ├── console.php                  # Console route definitions
+│   └── web.php                      # SPA fallback & XML/Robots passthrough
+├── storage/                         # Application logs, framework cache, and media
+├── tests/                           # Unit and Feature test suites
+├── artisan                          # Artisan CLI tool
+├── composer.json                    # PHP dependency declarations
+├── composer.lock                    # PHP lockfile
+├── package.json                     # Merged Node dependencies and scripts
+├── package-lock.json                # Node lockfile
+├── postcss.config.js                # PostCSS configuration with Tailwind
+├── tailwind.config.js               # Tailwind CSS theme configuration
+├── tsconfig.json                    # TypeScript configuration with @/* path aliases
+├── vite.config.ts                   # Integrated Laravel Vite + React plugin configuration
+├── deploy.sh                        # Automated unified VPS deployment script
+├── .env.example                     # Environment template for unified setup
+└── README.md                        # Master project documentation (this file)
 ```
 
 ---
@@ -274,15 +286,16 @@ cd nijamuddin
 
 ---
 
-### 3. Backend Installation & Setup
+### 3. Application Installation & Setup
 
-Open a terminal dedicated to the Laravel backend:
+All dependencies are installed directly from the unified repository root:
 
 ```bash
-cd backend
-
 # Install PHP dependencies
 composer install
+
+# Install Node dependencies (using legacy peer deps for Vite 8 compatibility)
+npm install --legacy-peer-deps
 
 # Create environment configuration
 cp .env.example .env
@@ -291,8 +304,8 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-#### Configure Database in `backend/.env`
-Open `backend/.env` and update the database connection variables for your local MySQL server (or SQLite):
+#### Configure Database in `.env`
+Open `.env` in the repository root and update the database connection variables for your local MySQL server:
 
 ```env
 DB_CONNECTION=mysql
@@ -308,7 +321,7 @@ DB_PASSWORD=your_local_password
 #### Run Migrations & Core Seeds
 
 ```bash
-# Execute schema migrations safely (never use migrate:fresh on production)
+# Execute schema migrations safely
 php artisan migrate
 
 # Seed roles, permissions, baseline CMS content, and lawyer profile
@@ -323,35 +336,12 @@ php artisan storage:link
 
 ---
 
-### 4. Frontend Installation & Setup
-
-Open a second terminal window for the React frontend:
-
-```bash
-cd frontend
-
-# Install Node dependencies
-npm install
-
-# Create local environment file
-cp .env.example .env
-```
-
-Verify `frontend/.env` contains the API base path:
-
-```env
-VITE_API_BASE_URL=http://localhost:8000/api/v1
-VITE_APP_NAME="Advocate Nijam Uddin Platform"
-```
-
----
-
-### 5. Initial Super Administrator Setup
+### 4. Initial Super Administrator Setup
 
 To access the back-office CMS at `/admin/login`, an administrative account with the `super_admin` role must be initialized.
 
 #### Option A: Interactive CLI Command (Recommended)
-Run the dedicated provisioning command in the `backend/` directory:
+Run the dedicated provisioning command:
 
 ```bash
 php artisan admin:create-super-admin
@@ -374,7 +364,7 @@ php artisan admin:create-super-admin \
 ```
 
 #### Option C: Environment-Driven CLI Setup
-If `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD` are configured in your local `backend/.env`:
+If `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD` are configured in your `.env`:
 
 ```bash
 php artisan admin:create-super-admin --from-env
@@ -385,30 +375,35 @@ php artisan admin:create-super-admin --from-env
 
 ---
 
-### 6. Running the Development Servers
+### 5. Running the Application
 
-The application requires running both the backend and frontend development servers.
+In development, you run the Laravel development server and Vite hot reload from the repository root.
 
-#### Terminal 1 — Backend API Server:
+#### Terminal 1 — Laravel Server:
 
 ```bash
-cd backend
 php artisan serve
 # Listening on http://127.0.0.1:8000
 ```
 
-#### Terminal 2 — Frontend Vite Server:
+#### Terminal 2 — Vite Dev Server (Hot Module Replacement):
 
 ```bash
-cd frontend
 npm run dev
-# Local: http://localhost:5173
+# Vite HMR active
+```
+
+#### Compiling for Production:
+
+```bash
+npm run build
+# Compiles assets into public/build/ with manifest.json
 ```
 
 Now open your browser:
-* **Public Chamber Website:** [http://localhost:5173](http://localhost:5173)
-* **Back-Office Admin Login:** [http://localhost:5173/admin/login](http://localhost:5173/admin/login)
-* **Backend API Health Check:** [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
+* **Public Chamber Website:** [http://127.0.0.1:8000](http://127.0.0.1:8000)
+* **Back-Office Admin Login:** [http://127.0.0.1:8000/admin/login](http://127.0.0.1:8000/admin/login)
+* **Backend API Health Check:** [http://127.0.0.1:8000/api/v1/health](http://127.0.0.1:8000/api/v1/health)
 
 ---
 
@@ -766,32 +761,29 @@ If the Redis daemon requires maintenance, or if you need to bypass Redis at any 
 
 The codebase enforces strict test coverage across authentication, authorization, CMS workflows, data sanitization, and security.
 
-### Running Backend Tests (Laravel)
+### Running Tests (Laravel PHPUnit)
 
 ```bash
-cd backend
 php artisan test
 ```
 
-* **Current Test Suite Status:** **322 tests passed (1,790 assertions)**, 1 skipped (real Redis integration test gracefully skipped when local phpredis is absent), 0 failures.
+* **Test Suite Status:** Over 290+ passing feature and unit tests with >1,600 assertions.
 * **Test Suites Covered:**
+  * `Tests\Feature\ExampleTest`: SPA client routes fallback, XML sitemap, robots.txt, API 404 envelope.
   * `Tests\Feature\Auth`: Sanctum token lifecycle, login/logout, rate limiting, and password hashing.
   * `Tests\Feature\Auth\SuperAdminProvisioningTest`: Admin CLI provisioning, seeder idempotency, production guards, and overwrite prevention.
   * `Tests\Feature\Security`: OWASP headers, CORS origin verification, SQL injection immunity, XSS sanitization, mass assignment protection, and IDOR access barriers.
   * `Tests\Feature\Cms`: Homepage section sequencing, menu tree nesting, and 301 redirection integrity.
-  * `Tests\Feature\Cms\RedisCacheIntegrationTest`: Versioned cache key permutations, Bangla/English locale separation, atomic namespace invalidation, TTL constant policy verification, safe CLI diagnostic execution, and real Redis integration.
+  * `Tests\Feature\Cms\RedisCacheIntegrationTest`: Versioned cache key permutations, Bangla/English locale separation, atomic namespace invalidation, TTL constant policy verification, and safe CLI diagnostic execution.
   * Domain modules: Practice areas, courtroom cases, research papers, judgment reviews, publications, media, videos, and profile credentials.
 
-### Running Frontend Typechecks & Production Build
+### Running TypeScript Verification & Production Build
 
 ```bash
-cd frontend
-
-# Run TypeScript compilation and Vite build
 npm run build
 ```
 
-* **Build Output:** Transforms all modules without TypeScript compilation errors into minified production assets in `frontend/dist/`.
+* **Build Output:** Compiles React 19 + TypeScript source and Tailwind CSS into minified chunks in `public/build/assets/` and generates `public/build/manifest.json` in under 3 seconds with exit code 0.
 
 ---
 
@@ -900,24 +892,22 @@ If an unexpected issue arises following a release activation:
 
 ### 1. Database Connection Refused
 * **Issue:** `SQLSTATE[HY000] [2002] Connection refused`.
-* **Fix:** Verify MySQL is running (`sudo systemctl status mysql`) and confirm `DB_HOST`, `DB_PORT`, and `DB_DATABASE` in `backend/.env` match your database server.
+* **Fix:** Verify MySQL is running (`sudo systemctl status mysql`) and confirm `DB_HOST`, `DB_PORT`, and `DB_DATABASE` in `.env` match your database server.
 
-### 2. Frontend API Calls Return 404 or CORS Error
-* **Issue:** React app cannot communicate with Laravel API.
+### 2. Frontend Assets Return 404
+* **Issue:** Styles or scripts missing when viewing the website.
 * **Fix:**
-  * Confirm `VITE_API_BASE_URL` in `frontend/.env` points to `http://localhost:8000/api/v1`.
-  * Ensure `CORS_ALLOWED_ORIGINS` in `backend/.env` includes `http://localhost:5173`.
-  * Verify `php artisan serve` is active on port 8000.
+  * Run `npm run build` to generate `public/build/manifest.json` and production assets.
+  * In development, ensure `npm run dev` is running alongside `php artisan serve`.
 
 ### 3. Missing Storage Symlink
 * **Issue:** Uploaded media or avatar images return 404.
-* **Fix:** Run `php artisan storage:link` inside the `backend/` directory to recreate the `public/storage` symbolic link.
+* **Fix:** Run `php artisan storage:link` from the root directory to recreate the `public/storage` symbolic link.
 
 ### 4. Admin Access Denied or Missing Super Admin
 * **Issue:** Cannot log in at `/admin/login`.
 * **Fix:** Provision or verify the super admin account:
   ```bash
-  cd backend
   php artisan admin:create-super-admin
   ```
 

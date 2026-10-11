@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# ADVOCATE NIJAM UDDIN (HAQ) — PRODUCTION DEPLOYMENT & UPDATE SCRIPT
+# ADVOCATE NIJAM UDDIN (HAQ) — UNIFIED PRODUCTION DEPLOYMENT SCRIPT
 # Target: aaPanel / Ubuntu 24.04 LTS / Hostinger VPS / Nginx / MySQL / Redis
 # Repository: https://github.com/sahabuddin123/lawyer-protfolio
 # Web Root: /www/wwwroot/nijamuddin.com
+# Document Root: /www/wwwroot/nijamuddin.com/public
 # ==============================================================================
 # Usage:
 #   ./deploy.sh            - Full update: pull latest main, build, and deploy
 #   ./deploy.sh check      - Validate server environment, PHP, tools & Redis
 #   ./deploy.sh build      - Compile frontend assets & install composer dependencies
-#   ./deploy.sh deploy     - Activate deployment & update web root
+#   ./deploy.sh deploy     - Activate deployment, run migrations & refresh cache
 #   ./deploy.sh rollback   - Revert to previous backup assets & refresh cache
 # ==============================================================================
 
@@ -17,17 +18,17 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # ------------------------------------------------------------------------------
-# CONFIGURATION & DIRECTORY HIERARCHY
+# CONFIGURATION & DIRECTORY HIERARCHY (UNIFIED APPLICATION ROOT)
 # ------------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BACKEND_DIR="${SCRIPT_DIR}/backend"
-FRONTEND_DIR="${SCRIPT_DIR}/frontend"
+APP_DIR="${SCRIPT_DIR}"
+BUILD_DIR="${APP_DIR}/public/build"
 WWW_ROOT="${WWW_ROOT:-/www/wwwroot/nijamuddin.com}"
-BACKUP_DIR="${WWW_ROOT}/.backup_assets"
+BACKUP_DIR="${APP_DIR}/.backup_assets"
 LOCK_FILE="/tmp/nijamuddin_deploy.lock"
 TIMESTAMP="$(date +"%Y%m%d%H%M%S")"
 
-LOGS_DIR="${BACKEND_DIR}/storage/logs/deployment"
+LOGS_DIR="${APP_DIR}/storage/logs/deployment"
 mkdir -p "${LOGS_DIR}" 2>/dev/null || LOGS_DIR="/tmp"
 LOG_FILE="${LOGS_DIR}/deploy_${TIMESTAMP}.log"
 
@@ -93,14 +94,10 @@ trap release_lock EXIT
 
 # Locate production environment file across supported topologies
 locate_env_file() {
-    if [[ -f "${BACKEND_DIR}/.env" ]]; then
-        echo "${BACKEND_DIR}/.env"
-    elif [[ -f "${SCRIPT_DIR}/.env" ]]; then
-        echo "${SCRIPT_DIR}/.env"
+    if [[ -f "${APP_DIR}/.env" ]]; then
+        echo "${APP_DIR}/.env"
     elif [[ -f "/www/wwwroot/nijamuddin-deploy/shared/.env" ]]; then
         echo "/www/wwwroot/nijamuddin-deploy/shared/.env"
-    elif [[ -f "${WWW_ROOT}/backend/.env" ]]; then
-        echo "${WWW_ROOT}/backend/.env"
     elif [[ -f "${WWW_ROOT}/.env" ]]; then
         echo "${WWW_ROOT}/.env"
     else
@@ -151,7 +148,7 @@ reload_php_fpm() {
 # ------------------------------------------------------------------------------
 cmd_check() {
     log "=================================================================="
-    log "Advocate Nijam Uddin Platform — Deployment Environment Audit"
+    log "Advocate Nijam Uddin Platform — Unified Environment Audit"
     log "=================================================================="
 
     # 1. Check required commands
@@ -175,11 +172,12 @@ cmd_check() {
         fi
     done
 
-    # 3. Check public web root
-    if [[ -d "${WWW_ROOT}" ]]; then
-        log_success "Public web root verified at ${WWW_ROOT}."
+    # 3. Check public web root & index.php entry point
+    if [[ -f "${APP_DIR}/public/index.php" ]]; then
+        log_success "Laravel public entry point verified at ${APP_DIR}/public/index.php."
     else
-        log_warn "Public web root ${WWW_ROOT} does not exist yet. Will be created."
+        log_err "Missing Laravel entry point: ${APP_DIR}/public/index.php!"
+        exit 1
     fi
 
     # 4. Check Environment File (.env)
@@ -189,20 +187,20 @@ cmd_check() {
         log_success "Production environment configuration found at: ${env_path}"
     else
         log_warn "No .env file found! Checked in:"
-        log_warn "  - ${BACKEND_DIR}/.env"
-        log_warn "  - ${SCRIPT_DIR}/.env"
+        log_warn "  - ${APP_DIR}/.env"
         log_warn "  - /www/wwwroot/nijamuddin-deploy/shared/.env"
-        log_warn "Please create ${BACKEND_DIR}/.env from .env.example before deploying."
+        log_warn "  - ${WWW_ROOT}/.env"
+        log_warn "Please create ${APP_DIR}/.env from .env.example before deploying."
     fi
 
     # 5. Check Git repository status
-    if git -C "${SCRIPT_DIR}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    if git -C "${APP_DIR}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         local current_branch current_commit
-        current_branch="$(git -C "${SCRIPT_DIR}" branch --show-current 2>/dev/null || echo "detached")"
-        current_commit="$(git -C "${SCRIPT_DIR}" rev-parse --short HEAD 2>/dev/null || echo "unknown")"
+        current_branch="$(git -C "${APP_DIR}" branch --show-current 2>/dev/null || echo "detached")"
+        current_commit="$(git -C "${APP_DIR}" rev-parse --short HEAD 2>/dev/null || echo "unknown")"
         log_success "Git repository verified on branch '${current_branch}' at commit ${current_commit}."
     else
-        log_warn "Directory ${SCRIPT_DIR} is not tracked as a Git worktree."
+        log_warn "Directory ${APP_DIR} is not tracked as a Git worktree."
     fi
 
     # 6. Check Nginx syntax if nginx binary is available
@@ -215,9 +213,9 @@ cmd_check() {
     fi
 
     # 7. Check database connectivity and pending migrations safely
-    if [[ -n "${env_path}" && -d "${BACKEND_DIR}" ]]; then
+    if [[ -n "${env_path}" ]]; then
         log "Testing database connectivity (read-only)..."
-        if (cd "${BACKEND_DIR}" && php artisan migrate:status >/dev/null 2>&1); then
+        if (cd "${APP_DIR}" && php artisan migrate:status >/dev/null 2>&1); then
             log_success "Database connectivity verified. Migration status: OK."
         else
             log_warn "Database connectivity check failed. Verify DB credentials in ${env_path}."
@@ -254,40 +252,36 @@ cmd_check() {
 cmd_build() {
     acquire_lock
     log "=================================================================="
-    log "Compiling Production Artifacts"
+    log "Compiling Unified Production Artifacts"
     log "=================================================================="
 
-    # 1. Build Frontend
-    if [[ -d "${FRONTEND_DIR}" ]]; then
-        log "Compiling React + Vite frontend bundle (npm run build)..."
-        (
-            cd "${FRONTEND_DIR}"
-            if [[ ! -d "node_modules" ]]; then
-                log "Installing frontend dependencies..."
-                npm ci --prefer-offline --no-audit || npm install --no-audit
-            fi
-            npm run build
-        )
-        log_success "Frontend production bundle compiled successfully."
+    # 1. Install Backend Dependencies via Composer
+    log "Installing Laravel production dependencies via Composer..."
+    (
+        cd "${APP_DIR}"
+        composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+    )
+    log_success "Composer production dependencies installed successfully."
+
+    # 2. Install Node Dependencies & Compile React Bundle
+    log "Compiling integrated React + TypeScript + Tailwind bundle via Vite..."
+    (
+        cd "${APP_DIR}"
+        if [[ ! -d "node_modules" ]]; then
+            log "Installing Node dependencies..."
+            npm ci --prefer-offline --no-audit 2>/dev/null || npm install --legacy-peer-deps --no-audit
+        fi
+        npm run build
+    )
+
+    if [[ -f "${BUILD_DIR}/manifest.json" ]]; then
+        log_success "Vite production bundle compiled successfully into ${BUILD_DIR}."
     else
-        log_err "Frontend directory ${FRONTEND_DIR} not found!"
+        log_err "Vite build failed to produce ${BUILD_DIR}/manifest.json!"
         exit 1
     fi
 
-    # 2. Install Backend Dependencies
-    if [[ -d "${BACKEND_DIR}" ]]; then
-        log "Installing Laravel production dependencies via Composer..."
-        (
-            cd "${BACKEND_DIR}"
-            composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
-        )
-        log_success "Composer production dependencies installed successfully."
-    else
-        log_err "Backend directory ${BACKEND_DIR} not found!"
-        exit 1
-    fi
-
-    log_success "Build step completed successfully."
+    log_success "Unified build step completed successfully."
 }
 
 # ------------------------------------------------------------------------------
@@ -297,7 +291,7 @@ cmd_deploy() {
     acquire_lock
 
     log "=================================================================="
-    log "Activating Deployment: ${TIMESTAMP}"
+    log "Activating Unified Deployment: ${TIMESTAMP}"
     log "=================================================================="
 
     # 1. Discover or link environment file
@@ -306,49 +300,49 @@ cmd_deploy() {
 
     if [[ -z "${env_path}" ]]; then
         log_err "Cannot deploy: No production .env configuration file found!"
-        log_err "Please create ${BACKEND_DIR}/.env (or copy from .env.example) before deploying."
+        log_err "Please create ${APP_DIR}/.env (or copy from .env.example) before deploying."
         exit 1
     fi
 
-    # Ensure backend/.env exists and points to our config
-    if [[ "${env_path}" != "${BACKEND_DIR}/.env" && ! -f "${BACKEND_DIR}/.env" ]]; then
-        log "Linking ${env_path} to ${BACKEND_DIR}/.env..."
-        ln -nfs "${env_path}" "${BACKEND_DIR}/.env" 2>/dev/null || cp "${env_path}" "${BACKEND_DIR}/.env"
+    # Ensure root .env exists
+    if [[ "${env_path}" != "${APP_DIR}/.env" && ! -f "${APP_DIR}/.env" ]]; then
+        log "Linking ${env_path} to ${APP_DIR}/.env..."
+        ln -nfs "${env_path}" "${APP_DIR}/.env" 2>/dev/null || cp "${env_path}" "${APP_DIR}/.env"
     fi
 
-    # 2. If frontend hasn't been built yet, build it now
-    if [[ ! -d "${FRONTEND_DIR}/dist" || ! -f "${FRONTEND_DIR}/dist/index.html" ]]; then
-        log "Frontend build not detected. Running build step first..."
+    # 2. If assets haven't been built yet, build now
+    if [[ ! -f "${BUILD_DIR}/manifest.json" ]]; then
+        log "Production assets not detected in ${BUILD_DIR}. Running build step first..."
         cmd_build
     fi
 
     # 3. Prepare storage directories and permissions
-    log "Configuring backend storage structure..."
-    mkdir -p "${BACKEND_DIR}/storage/app/public"
-    mkdir -p "${BACKEND_DIR}/storage/app/secure_docs"
-    mkdir -p "${BACKEND_DIR}/storage/framework/cache"
-    mkdir -p "${BACKEND_DIR}/storage/framework/sessions"
-    mkdir -p "${BACKEND_DIR}/storage/framework/views"
-    mkdir -p "${BACKEND_DIR}/storage/logs"
-    chmod -R 775 "${BACKEND_DIR}/storage" "${BACKEND_DIR}/bootstrap/cache" 2>/dev/null || true
+    log "Configuring storage structure and permissions..."
+    mkdir -p "${APP_DIR}/storage/app/public"
+    mkdir -p "${APP_DIR}/storage/app/secure_docs"
+    mkdir -p "${APP_DIR}/storage/framework/cache"
+    mkdir -p "${APP_DIR}/storage/framework/sessions"
+    mkdir -p "${APP_DIR}/storage/framework/views"
+    mkdir -p "${APP_DIR}/storage/logs"
+    chmod -R 775 "${APP_DIR}/storage" "${APP_DIR}/bootstrap/cache" 2>/dev/null || true
 
     # 4. Storage Link
     (
-        cd "${BACKEND_DIR}"
+        cd "${APP_DIR}"
         php artisan storage:link || true
     )
 
     # 5. Run safe production database migrations
     log "Running safe database migrations..."
     (
-        cd "${BACKEND_DIR}"
+        cd "${APP_DIR}"
         php artisan migrate --force --no-interaction
     )
 
-    # 6. Cache framework configurations
+    # 6. Cache framework configurations, routes, and views
     log "Optimizing Laravel configuration, routes, and views..."
     (
-        cd "${BACKEND_DIR}"
+        cd "${APP_DIR}"
         php artisan config:cache
         php artisan route:cache
         php artisan view:cache
@@ -356,34 +350,19 @@ cmd_deploy() {
 
         # 6.1 Redis validation probe if configured
         local cache_store
-        cache_store=$(grep -E '^CACHE_STORE=' "${BACKEND_DIR}/.env" 2>/dev/null | cut -d '=' -f 2 | tr -d ' "' || echo "")
+        cache_store=$(grep -E '^CACHE_STORE=' "${APP_DIR}/.env" 2>/dev/null | cut -d '=' -f 2 | tr -d ' "' || echo "")
         if [[ "${cache_store}" == "redis" ]]; then
             log "Verifying Redis cache connectivity..."
             php artisan redis:verify || log_warn "Redis check reported a warning. Application will use configured fallback."
         fi
     )
 
-    # 7. Update Public Web Root (/www/wwwroot/nijamuddin.com)
-    log "Updating public web root at ${WWW_ROOT}..."
-    mkdir -p "${WWW_ROOT}" "${BACKUP_DIR}"
-
-    # Backup existing assets for instant rollback
-    if [[ -d "${WWW_ROOT}/assets" ]]; then
-        rm -rf "${BACKUP_DIR}/assets_previous"
-        cp -r "${WWW_ROOT}/assets" "${BACKUP_DIR}/assets_previous" 2>/dev/null || true
+    # 7. Backup existing assets for rollback
+    mkdir -p "${BACKUP_DIR}"
+    if [[ -d "${BUILD_DIR}" ]]; then
+        rm -rf "${BACKUP_DIR}/build_previous"
+        cp -r "${BUILD_DIR}" "${BACKUP_DIR}/build_previous" 2>/dev/null || true
     fi
-    if [[ -f "${WWW_ROOT}/index.html" ]]; then
-        cp "${WWW_ROOT}/index.html" "${BACKUP_DIR}/index_previous.html" 2>/dev/null || true
-    fi
-
-    # Copy freshly built React SPA files into public web root
-    # Preserves aaPanel specific files: .user.ini, .htaccess, SSL certificates, .well-known
-    mkdir -p "${WWW_ROOT}/assets"
-    cp -r "${FRONTEND_DIR}/dist/assets/." "${WWW_ROOT}/assets/"
-    cp "${FRONTEND_DIR}/dist/index.html" "${WWW_ROOT}/index.html"
-    cp "${FRONTEND_DIR}/dist/"*.svg "${WWW_ROOT}/" 2>/dev/null || true
-    cp "${FRONTEND_DIR}/dist/"*.png "${WWW_ROOT}/" 2>/dev/null || true
-    cp "${FRONTEND_DIR}/dist/"*.ico "${WWW_ROOT}/" 2>/dev/null || true
 
     # 8. Reload PHP-FPM service
     reload_php_fpm
@@ -391,12 +370,12 @@ cmd_deploy() {
     # 9. Verify deployment health check
     log "Verifying deployment health..."
     (
-        cd "${BACKEND_DIR}"
+        cd "${APP_DIR}"
         php artisan test --filter=HealthCheckTest --no-ansi 2>/dev/null && log_success "Health check suite: PASSED." || log_warn "Health check test suite skipped or completed with warnings."
     )
 
     log_success "=================================================================="
-    log_success "Deployment successfully activated at ${WWW_ROOT}!"
+    log_success "Unified deployment successfully activated at ${APP_DIR}!"
     log_success "Domain: https://nijamuddin.com"
     log_success "=================================================================="
 }
@@ -410,18 +389,18 @@ cmd_rollback() {
     log "Initiating Emergency Rollback"
     log "=================================================================="
 
-    if [[ ! -d "${BACKUP_DIR}/assets_previous" || ! -f "${BACKUP_DIR}/index_previous.html" ]]; then
-        log_err "No previous asset backup found in ${BACKUP_DIR}. Cannot perform asset rollback."
+    if [[ ! -d "${BACKUP_DIR}/build_previous" ]]; then
+        log_err "No previous build backup found in ${BACKUP_DIR}/build_previous. Cannot perform rollback."
         exit 1
     fi
 
-    log "Restoring previous static assets into ${WWW_ROOT}..."
-    cp -r "${BACKUP_DIR}/assets_previous/." "${WWW_ROOT}/assets/"
-    cp "${BACKUP_DIR}/index_previous.html" "${WWW_ROOT}/index.html"
+    log "Restoring previous compiled assets into ${BUILD_DIR}..."
+    rm -rf "${BUILD_DIR}"
+    cp -r "${BACKUP_DIR}/build_previous" "${BUILD_DIR}"
 
     log "Re-caching Laravel framework configuration..."
     (
-        cd "${BACKEND_DIR}"
+        cd "${APP_DIR}"
         php artisan config:clear
         php artisan config:cache
         php artisan route:clear
@@ -440,34 +419,34 @@ cmd_rollback() {
 # ------------------------------------------------------------------------------
 cmd_update() {
     log "=================================================================="
-    log "Advocate Nijam Uddin Platform — Automated Update & Deployment"
+    log "Advocate Nijam Uddin Platform — Automated Unified Deployment"
     log "=================================================================="
 
     # 1. Check if inside Git worktree and pull latest changes safely
-    if git -C "${SCRIPT_DIR}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    if git -C "${APP_DIR}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         log "Checking for uncommitted changes in Git working tree..."
         local git_status
-        git_status="$(git -C "${SCRIPT_DIR}" status --porcelain 2>/dev/null || echo "")"
+        git_status="$(git -C "${APP_DIR}" status --porcelain 2>/dev/null || echo "")"
 
         # Filter out ignored/runtime untracked files
         local dirty_files
-        dirty_files="$(echo "${git_status}" | grep -vE '(\.env|storage/|node_modules/|vendor/|dist/|\.backup)' || echo "")"
+        dirty_files="$(echo "${git_status}" | grep -vE '(\.env|storage/|node_modules/|vendor/|public/build/|\.backup)' || echo "")"
 
         if [[ -n "${dirty_files}" ]]; then
             log_warn "Git working tree contains uncommitted modifications. Skipping automatic git pull to preserve changes:"
             echo "${dirty_files}"
         else
             log "Fetching and fast-forwarding latest commits from origin/main..."
-            git -C "${SCRIPT_DIR}" fetch origin main
-            git -C "${SCRIPT_DIR}" merge --ff-only origin/main 2>/dev/null || git -C "${SCRIPT_DIR}" pull origin main || log_warn "Could not fast-forward Git; continuing with local codebase."
-            log_success "Git codebase up to date: $(git -C "${SCRIPT_DIR}" rev-parse --short HEAD)"
+            git -C "${APP_DIR}" fetch origin main
+            git -C "${APP_DIR}" merge --ff-only origin/main 2>/dev/null || git -C "${APP_DIR}" pull origin main || log_warn "Could not fast-forward Git; continuing with local codebase."
+            log_success "Git codebase up to date: $(git -C "${APP_DIR}" rev-parse --short HEAD)"
         fi
     fi
 
     # 2. Run prerequisite check
     cmd_check
 
-    # 3. Build frontend & backend artifacts
+    # 3. Build unified artifacts
     cmd_build
 
     # 4. Activate deployment
@@ -502,8 +481,8 @@ case "${action}" in
         echo "  (no args)  Full one-command update: git pull, build, deploy & verify"
         echo "  check      Verify environment, PHP extensions, and tools"
         echo "  build      Compile frontend bundle & install composer dependencies"
-        echo "  deploy     Activate deployment & copy files to public web root"
-        echo "  rollback   Revert public web root to previous asset backup"
+        echo "  deploy     Activate deployment, run migrations & refresh cache"
+        echo "  rollback   Revert compiled assets to previous backup"
         exit 1
         ;;
 esac

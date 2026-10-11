@@ -16,28 +16,25 @@ Thumbs.db
 *.local
 
 # Dependencies
-/backend/vendor/
-/frontend/node_modules/
-node_modules/
-vendor/
+/node_modules/
+/vendor/
 
 # Build artifacts & coverage
-/frontend/dist/
-/frontend/coverage/
-dist/
-dist-ssr/
-public/build/
-public/hot/
+/dist/
+/coverage/
+/public/build/
+/public/hot/
+
 # Keep documentation local; do not upload to GitHub
 /docs/
 
 # Laravel runtime files
-/backend/storage/logs/*
-/backend/storage/framework/cache/*
-/backend/storage/framework/sessions/*
-/backend/storage/framework/views/*
-/backend/bootstrap/cache/*.php
-/backend/public/storage
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/bootstrap/cache/*.php
+/public/storage
 storage/*.key
 .phpunit.result.cache
 
@@ -48,5 +45,5 @@ storage/*.key
 *.sqlite
 *.sqlite3
 *.backup
-backend/database/*.sqlite
-backend/database/*.sqlite3
+database/*.sqlite
+database/*.sqlite3
