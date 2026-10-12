@@ -52,9 +52,9 @@ export const Hero: React.FC<HeroProps> = ({
       <div className="absolute top-0 right-0 w-96 h-96 bg-gold-primary/5 rounded-full blur-3xl pointer-events-none" />
 
       <Container wide>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-          {/* Column 1: Editorial Authority Narrative */}
-          <div className="lg:col-span-7 xl:col-span-7 z-10 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
+          {/* Column 1: Editorial Authority Narrative (Mobile: Order 2, Desktop: Order 1) */}
+          <div className="lg:col-span-7 xl:col-span-7 z-10 space-y-6 order-2 lg:order-1">
             <div className="space-y-3">
               <h1 className="text-3xl sm:text-4xl md:text-5xl xl:text-6xl font-cinzel font-bold text-text-primary tracking-tight leading-[1.12]">
                 {title}
@@ -120,8 +120,8 @@ export const Hero: React.FC<HeroProps> = ({
             </div>
           </div>
 
-          {/* Column 2: Large Professional Portrait */}
-          <div className="lg:col-span-5 xl:col-span-5 flex justify-center lg:justify-end relative">
+          {/* Column 2: Large Professional Portrait (Mobile: Order 1, Desktop: Order 2) */}
+          <div className="lg:col-span-5 xl:col-span-5 flex justify-center lg:justify-end relative order-1 lg:order-2">
             <div className="relative w-full max-w-sm sm:max-w-md lg:max-w-none">
               {/* Outer Golden Ambient Halo */}
               <div className="absolute -inset-2 rounded-3xl bg-gradient-to-tr from-amber-500/20 via-amber-600/5 to-transparent blur-xl pointer-events-none" />

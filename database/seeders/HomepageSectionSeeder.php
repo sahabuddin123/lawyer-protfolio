@@ -27,8 +27,8 @@ class HomepageSectionSeeder extends Seeder
                     'bn' => 'আইনজীবী, বাংলাদেশ সুপ্রিম কোর্ট',
                 ],
                 'content' => [
-                    'en' => 'Committed to Constitutional Justice, Judicial Rigor, and Principled Legal Advocacy before the Supreme Court of Bangladesh.',
-                    'bn' => 'বাংলাদেশ সুপ্রিম কোর্টে সাংবিধানিক সুবিচার, বিচারিক নিষ্ঠা এবং দায়িত্বশীল আইনি প্রতিনিধিত্বে নিবেদিতপ্রাণ।',
+                    'en' => 'Committed to constitutional justice, judicial rigor, and principled legal advocacy before the Supreme Court of Bangladesh. Providing comprehensive legal representation and strategic counsel across constitutional writ petitions, civil litigation, property disputes, and corporate advisory with unwavering ethical integrity.',
+                    'bn' => 'বাংলাদেশ সুপ্রিম কোর্টে সাংবিধানিক সুবিচার, বিচারিক নিষ্ঠা এবং নীতিবান আইনি প্রতিনিধিত্বে নিবেদিতপ্রাণ। সততা, গভীর প্রস্তুতি এবং পেশাগত দায়বদ্ধতার সাথে সাংবিধানিক রিট আবেদন, দেওয়ানি ও ফৌজদারি মামলা পরিচালনা, ভূমির স্বত্ব দলিল যাচাই এবং কর্পোরেট বিষয়ে নির্ভরযোগ্য আইনি সেবা প্রদান।',
                 ],
                 'settings' => [
                     'show_cta' => true,
