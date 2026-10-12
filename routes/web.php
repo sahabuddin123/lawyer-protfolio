@@ -24,6 +24,11 @@ Route::get('/', function () {
     return view('app');
 });
 
+// Authentication SPA entry fallback
+Route::get('/login', function () {
+    return view('app');
+})->name('login');
+
 // Single Page Application: Fallback Route (excludes /api/*)
 Route::get('/{any}', function () {
     return view('app');
