@@ -10,10 +10,7 @@ use App\Models\HomepageSection;
 use App\Models\JudgmentReview;
 use App\Models\LegalResearch;
 use App\Models\Media;
-use App\Models\MediaPress;
-use App\Models\Publication;
 use App\Models\SiteSetting;
-use App\Models\Video;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -21,7 +18,7 @@ use Illuminate\Support\Str;
 class HomepageContentPopulationSeeder extends Seeder
 {
     /**
-     * Run the database seeds idempotently.
+     * Run the database seeds idempotently without inventing personal claims.
      */
     public function run(): void
     {
@@ -29,9 +26,6 @@ class HomepageContentPopulationSeeder extends Seeder
         $this->seedCourtroomEducationalGuides();
         $this->seedLandmarkJudgmentReviews();
         $this->seedLegalResearchPapers();
-        $this->seedEducationalPublications();
-        $this->seedLegalExplainerTopics();
-        $this->seedMediaPressCommentary();
         $this->seedInstitutionalGalleryAlbum();
         $this->updateHomepageSectionsAndCta();
 
@@ -70,42 +64,18 @@ class HomepageContentPopulationSeeder extends Seeder
                 'sort_order' => 3,
             ],
             [
-                'slug' => 'legal-compendiums',
-                'type' => 'publication',
-                'name' => ['en' => 'Legal Practice Series', 'bn' => 'আইনি অনুশীলন সিরিজ'],
-                'description' => ['en' => 'Practice guides and statutory compendiums', 'bn' => 'ব্যবহারিক নির্দেশিকা ও সংবিধিবদ্ধ সংকলন'],
+                'slug' => 'village-justice',
+                'type' => 'research',
+                'name' => ['en' => 'Grassroots Justice Systems', 'bn' => 'তৃণমূল বিচারব্যবস্থা ও সালিশ'],
+                'description' => ['en' => 'Socio-legal field inquiries into grassroots dispute resolution and village courts', 'bn' => 'গ্রাম আদালত ও তৃণমূল পর্যায়ের বিরোধ নিষ্পত্তি সংক্রান্ত আর্থ-সামাজিক ও আইনি গবেষণা'],
                 'is_active' => true,
-                'sort_order' => 1,
-            ],
-            [
-                'slug' => 'corporate-governance',
-                'type' => 'publication',
-                'name' => ['en' => 'Corporate Law Bulletins', 'bn' => 'কর্পোরেট আইন সহায়িকা'],
-                'description' => ['en' => 'Regulatory compliance and company administration', 'bn' => 'কোম্পানি প্রশাসন ও বিধিবদ্ধ কমপ্লায়েন্স'],
-                'is_active' => true,
-                'sort_order' => 2,
-            ],
-            [
-                'slug' => 'legal-explainers',
-                'type' => 'video',
-                'name' => ['en' => 'Legal Explainer Topics', 'bn' => 'আইনি শিক্ষামূলক আলোচনা'],
-                'description' => ['en' => 'Procedural guidance for citizens and litigants', 'bn' => 'নাগরিক ও বিচারপ্রার্থীদের জন্য পদ্ধতিগত দিকনির্দেশনা'],
-                'is_active' => true,
-                'sort_order' => 1,
-            ],
-            [
-                'slug' => 'legal-journalism',
-                'type' => 'media',
-                'name' => ['en' => 'National Legal Journalism', 'bn' => 'আইনি সাংবাদিকতা ও পর্যালোচনা'],
-                'description' => ['en' => 'Press coverage and analysis of contemporary legal issues', 'bn' => 'সমসাময়িক আইনি বিষয়ে গণমাধ্যমের বিশ্লেষণ'],
-                'is_active' => true,
-                'sort_order' => 1,
+                'sort_order' => 4,
             ],
             [
                 'slug' => 'judicial-architecture',
                 'type' => 'gallery',
-                'name' => ['en' => 'Judicial Heritage', 'bn' => 'বিচারিক ঐতিহ্য'],
-                'description' => ['en' => 'Supreme Court landmarks and architectural heritage', 'bn' => 'বাংলাদেশ সুপ্রিম কোর্টের স্থাপত্য ও নিদর্শন'],
+                'name' => ['en' => 'Chamber & Judicial Heritage', 'bn' => 'চেম্বার ও বিচারিক ঐতিহ্য'],
+                'description' => ['en' => 'Supreme Court chambers, law library, and institutional portraits', 'bn' => 'সুপ্রিম কোর্ট চেম্বার, আইন লাইব্রেরি এবং প্রামাণ্য প্রতিকৃতি'],
                 'is_active' => true,
                 'sort_order' => 1,
             ],
@@ -121,6 +91,7 @@ class HomepageContentPopulationSeeder extends Seeder
 
     /**
      * 2. Section 5: Courtroom Experience — Educational Procedure Guides.
+     * (Clearly labelled as procedural explainers; no fabricated personal courtroom victories).
      */
     protected function seedCourtroomEducationalGuides(): void
     {
@@ -410,15 +381,42 @@ class HomepageContentPopulationSeeder extends Seeder
     }
 
     /**
-     * 4. Section 7: Legal Research & Papers — Bilingual Treatises on Bangladesh Law.
+     * 4. Section 7: Legal Research & Papers.
+     * (Paper 1: CV-verified postgraduate research by Advocate Nijam Uddin; Papers 2-3: Chamber educational studies).
      */
     protected function seedLegalResearchPapers(): void
     {
         $categoryConst = Category::where('slug', 'constitutional-law')->first();
         $categoryCivil = Category::where('slug', 'civil-jurisprudence')->first();
-        $categoryCrim = Category::where('slug', 'criminal-procedure')->first();
+        $categoryVillage = Category::where('slug', 'village-justice')->first();
 
         $papers = [
+            [
+                'slug' => 'comparative-study-village-courts-bangladesh',
+                'category_id' => $categoryVillage?->id,
+                'research_type' => 'research_paper',
+                'title' => [
+                    'en' => 'A Comparative Study of the Village Court System in Bangladesh: Statutory Powers and Grassroots Dispute Settlement',
+                    'bn' => 'বাংলাদেশে গ্রাম আদালত ব্যবস্থার তুলনামূলক পর্যালোচনা: সংবিধিবদ্ধ এখতিয়ার ও তৃণমূল বিরোধ নিষ্পত্তি',
+                ],
+                'author' => [
+                    'en' => 'Advocate Nijam Uddin (LL.M. Field Research)',
+                    'bn' => 'এডভোকেট নিজাম উদ্দিন (এলএল.এম. মাঠপর্যায়ের গবেষণা)',
+                ],
+                'excerpt' => [
+                    'en' => 'A year-long postgraduate socio-legal field research conducted under the Faculty of Law, University of Chittagong, examining statutory village court powers, functions, dispute settlement dynamics, and practical challenges at the grassroots in Noakhali.',
+                    'bn' => 'চট্টগ্রাম বিশ্ববিদ্যালয়ের আইন অনুষদের অধীনে পরিচালিত বছরব্যাপী মাঠপর্যায়ের গবেষণা, যেখানে নোয়াখালী অঞ্চলে গ্রাম আদালতের সংবিধিবদ্ধ এখতিয়ার, ক্ষমতা এবং তৃণমূল পর্যায়ে বিরোধ নিষ্পত্তির বাস্তবসম্মত গতিপ্রকৃতি ও চ্যালেঞ্জসমূহ মূল্যায়ন করা হয়েছে।',
+                ],
+                'content' => [
+                    'en' => "<p>The Village Courts Act 2006 (as amended) establishes a statutory forum at the Union Parishad level intended to resolve petty civil and criminal disputes swiftly and affordably. In 2012, as part of Master of Laws (LL.M.) postgraduate legal studies at the University of Chittagong, year-long empirical field research was conducted across Noakhali examining the grassroots functioning of these courts.</p><p>Key areas investigated included: the extent of community awareness regarding village court jurisdiction; the procedural interface between formal police administration and Union Parishad benches; enforcement challenges of village court decrees; and the comparative efficacy of traditional shalish versus statutory village adjudication.</p><p>The findings highlighted that while village courts offer immense potential to reduce backlog in subordinate civil and criminal courts, their long-term efficacy depends upon trained secretarial support, impartial constitution of the five-member bench, and clear public understanding of jurisdictional pecuniary limits.</p>",
+                    'bn' => "<p>২০০৬ সালের গ্রাম আদালত আইন (সংশোধিত) ইউনিয়ন পরিষদ পর্যায়ে ক্ষুদ্র দেওয়ানি ও ফৌজদারি বিরোধ দ্রুত ও স্বল্পব্যয়ে নিষ্পত্তির লক্ষ্যে একটি সংবিধিবদ্ধ কাঠামো প্রতিষ্ঠা করেছে। ২০১২ সালে চট্টগ্রাম বিশ্ববিদ্যালয়ের আইন অনুষদে স্নাতকোত্তর (এলএল.এম.) শিক্ষা কার্যক্রমের অংশ হিসেবে নোয়াখালী জেলায় গ্রাম আদালতের সার্বিক কার্যকারিতার ওপর বছরব্যাপী মাঠপর্যায়ের গবেষণা পরিচালিত হয়।</p><p>গবেষণার আওতায় মূলত অনুসন্ধান করা হয়: গ্রাম আদালতের এখতিয়ার ও ক্ষমতা সম্পর্কে সাধারণ মানুষের সচেতনতার মাত্রা; থানা পুলিশ ও ইউনিয়ন পরিষদ এজলাসের পদ্ধতিগত সংযোগ; গ্রাম আদালতের সিদ্ধান্ত বাস্তবায়নের বাস্তবিক সীমাবদ্ধতা; এবং প্রচলিত ঐতিহ্যবাহী সালিশের সাথে বিধিবদ্ধ গ্রাম আদালতের তুলনামূলক কার্যকারিতা।</p><p>গবেষণার ফলাফলে দেখা যায়, গ্রাম আদালত অধস্তন আদালতের মামলার জট হ্রাসে অপরিসীম অবদান রাখতে সক্ষম হলেও এর স্থায়িত্বশীল সফলতার জন্য প্রশিক্ষিত সচিবীয় সহায়তা, নিরপেক্ষ পাঁচ সদস্যবিশিষ্ট বেঞ্চ গঠন এবং সংবিধিবদ্ধ আর্থিক এখতিয়ার সম্পর্কে সাধারণ নাগরিকের স্বচ্ছ ধারণা থাকা অপরিহার্য।</p>",
+                ],
+                'research_date' => '2012-10-15',
+                'status' => 'published',
+                'visibility' => 'public',
+                'is_featured' => true,
+                'sort_order' => 1,
+            ],
             [
                 'slug' => 'enforcement-fundamental-rights-article-102',
                 'category_id' => $categoryConst?->id,
@@ -428,8 +426,8 @@ class HomepageContentPopulationSeeder extends Seeder
                     'bn' => 'বাংলাদেশ সংবিধানের ১০২(১) অনুচ্ছেদ অনুসারে মৌলিক অধিকার বলবৎকরণ পদ্ধতি',
                 ],
                 'author' => [
-                    'en' => 'Advocate Nijam Uddin (Haq)',
-                    'bn' => 'অ্যাডভোকেট নিজাম উদ্দিন (হক)',
+                    'en' => 'Chamber Legal Research Desk',
+                    'bn' => 'চেম্বার আইনি গবেষণা সেল',
                 ],
                 'excerpt' => [
                     'en' => 'An exhaustive analysis of the constitutional machinery for enforcing fundamental rights guaranteed under Part III of the Constitution of Bangladesh, examining judicial review standards and locus standi developments.',
@@ -443,7 +441,7 @@ class HomepageContentPopulationSeeder extends Seeder
                 'status' => 'published',
                 'visibility' => 'public',
                 'is_featured' => true,
-                'sort_order' => 1,
+                'sort_order' => 2,
             ],
             [
                 'slug' => 'adr-arbitration-act-2001-bangladesh',
@@ -454,8 +452,8 @@ class HomepageContentPopulationSeeder extends Seeder
                     'bn' => '২০০১ সালের সালিশি আইন এবং বিকল্প বিরোধ নিষ্পত্তির কার্যকারিতা',
                 ],
                 'author' => [
-                    'en' => 'Advocate Nijam Uddin (Haq)',
-                    'bn' => 'অ্যাডভোকেট নিজাম উদ্দিন (হক)',
+                    'en' => 'Chamber Legal Research Desk',
+                    'bn' => 'চেম্বার আইনি গবেষণা সেল',
                 ],
                 'excerpt' => [
                     'en' => 'Evaluating statutory mechanisms for domestic commercial arbitration, enforcement of foreign arbitral awards, and judicial restraint under the Arbitration Act 2001 (Act No. I of 2001).',
@@ -466,32 +464,6 @@ class HomepageContentPopulationSeeder extends Seeder
                     'bn' => "<p>২০০১ সালের সালিশ আইন প্রণয়নের মাধ্যমে বাংলাদেশে বাণিজ্যিক বিরোধ নিষ্পত্তির ক্ষেত্রে আধুনিক আইনি কাঠামো প্রতিষ্ঠিত হয়, যা আন্তর্জাতিক বাণিজ্যিক সালিশির ক্ষেত্রে জাতিসংঘের আনসিট্রাল মডেল ল (UNCITRAL Model Law)-এর ওপর ভিত্তি করে রচিত।</p><p>চুক্তিতে সালিশি ক্লজ থাকলে আদালতের হস্তক্ষেপের সীমাবদ্ধতা (ধারা ৭) এবং নিউইয়র্ক কনভেনশনের অধীনে আন্তর্জাতিক আরবিট্রেশন অ্যাওয়ার্ড কার্যকর করার প্রক্রিয়া এই প্রবন্ধে বিশ্লেষণ করা হয়েছে।</p>",
                 ],
                 'research_date' => '2024-02-15',
-                'status' => 'published',
-                'visibility' => 'public',
-                'is_featured' => true,
-                'sort_order' => 2,
-            ],
-            [
-                'slug' => 'due-process-evidentiary-standards-bangladesh',
-                'category_id' => $categoryCrim?->id,
-                'research_type' => 'case_analysis',
-                'title' => [
-                    'en' => 'Due Process and Evidentiary Standards in Bangladesh Criminal Jurisprudence',
-                    'bn' => 'বাংলাদেশের ফৌজদারি বিচারব্যবস্থায় ন্যায়বিচার ও সাক্ষ্য আইনের মূলনীতি',
-                ],
-                'author' => [
-                    'en' => 'Advocate Nijam Uddin (Haq)',
-                    'bn' => 'অ্যাডভোকেট নিজাম উদ্দিন (হক)',
-                ],
-                'excerpt' => [
-                    'en' => 'An examination of the constitutional right to a fair trial under Article 35 and statutory burdens of proof under the Evidence Act 1872 in serious criminal trials.',
-                    'bn' => 'সংবিধানের ৩৫ অনুচ্ছেদে সুরক্ষিত সুবিচারের অধিকার এবং ১৮৭২ সালের সাক্ষ্য আইনের আওতায় ফৌজদারি মামলায় প্রমাণের দায় ও কার্যপ্রণালী সংক্রান্ত আইনি পর্যালোচনা।',
-                ],
-                'content' => [
-                    'en' => "<p>The administration of criminal justice in Bangladesh rests upon the bedrock principles of due process guaranteed by Article 31 and Article 35 of the Constitution, alongside statutory evidentiary requirements under the Evidence Act 1872.</p><p>Under Section 101 of the Evidence Act, the burden of proving guilt beyond reasonable doubt rests squarely upon the prosecution. Circumstantial evidence must form an unbroken chain pointing exclusively to guilt.</p><p>This treatise reviews the procedural evolution of Section 161 statements, dying declarations under Section 32, and the constitutional protection against self-incrimination.</p>",
-                    'bn' => "<p>বাংলাদেশের ফৌজদারি বিচারব্যবস্থা সংবিধানের ৩১ ও ৩৫ অনুচ্ছেদে বর্ণিত সুবিচারের অধিকার এবং ১৮৭২ সালের সাক্ষ্য আইনের সুনির্দিষ্ট বিধানাবলীর ওপর সুপ্রতিষ্ঠিত।</p><p>সাক্ষ্য আইনের ১০১ ধারা অনুসারে সন্দেহাতীতভাবে অপরাধ প্রমাণের দায় রাষ্ট্রপক্ষের ওপর বর্তায়। পারিপার্শ্বিক সাক্ষ্যের ওপর ভিত্তি করে বিচারের ক্ষেত্রে প্রমাণের অবিচ্ছিন্ন শৃঙ্খল (chain of circumstances) নিশ্চিত করার বাধ্যবাধকতা এই গবেষণায় পর্যালোচনা করা হয়েছে।</p>",
-                ],
-                'research_date' => '2024-03-10',
                 'status' => 'published',
                 'visibility' => 'public',
                 'is_featured' => true,
@@ -508,313 +480,15 @@ class HomepageContentPopulationSeeder extends Seeder
     }
 
     /**
-     * 5. Section 8: Books & Publications — Educational Resources & Practice Compendiums.
-     */
-    protected function seedEducationalPublications(): void
-    {
-        $categoryComp = Category::where('slug', 'legal-compendiums')->first();
-        $categoryCorp = Category::where('slug', 'corporate-governance')->first();
-
-        $publications = [
-            [
-                'slug' => 'citizens-guide-to-bangladesh-legal-system',
-                'category_id' => $categoryComp?->id,
-                'publication_type' => 'Legal Guide',
-                'title' => [
-                    'en' => "A Citizen's Primer on the Courts and Legal System of Bangladesh",
-                    'bn' => 'বাংলাদেশের বিচারব্যবস্থা ও আদালত কাঠামো: নাগরিক নির্দেশিকা',
-                ],
-                'publication_name' => [
-                    'en' => 'Chamber Legal Education Series',
-                    'bn' => 'চেম্বার আইনি শিক্ষা সিরিজ',
-                ],
-                'publication_date' => '2024-01-10',
-                'author' => [
-                    'en' => 'Advocate Nijam Uddin (Haq)',
-                    'bn' => 'অ্যাডভোকেট নিজাম উদ্দিন (হক)',
-                ],
-                'excerpt' => [
-                    'en' => 'An accessible compendium detailing the hierarchy of civil and criminal courts in Bangladesh, from Magistrate and Assistant Judge Courts to the Supreme Court of Bangladesh.',
-                    'bn' => 'সহকারী জজ ও ম্যাজিস্ট্রেট আদালত থেকে শুরু করে বাংলাদেশ সুপ্রিম কোর্ট পর্যন্ত আদালতের স্তরবিন্যাস এবং বিচারপ্রক্রিয়া সংক্রান্ত সার্বিক ধারণাপত্র।',
-                ],
-                'content' => [
-                    'en' => "<p>Understanding the court hierarchy in Bangladesh is the first step toward effective legal resolution. The judicial hierarchy is divided into subordinate courts and the Supreme Court of Bangladesh (comprising the High Court Division and Appellate Division).</p><p>This educational primer explains original, appellate, and revisional jurisdictions, helping citizens understand which forum possesses competent authority for their specific legal matters.</p>",
-                    'bn' => "<p>বাংলাদেশের বিচার ব্যবস্থার স্তরবিন্যাস বোঝা সাধারণ নাগরিক ও বিচারপ্রার্থীদের জন্য অত্যন্ত জরুরি। অধস্তন আদালত এবং বাংলাদেশ সুপ্রিম কোর্টের (হাইকোর্ট বিভাগ ও আপিল বিভাগ) অধিক্ষেত্র এই নির্দেশিকায় সহজ ভাষায় ব্যাখ্যা করা হয়েছে।</p>",
-                ],
-                'status' => 'published',
-                'visibility' => 'public',
-                'is_featured' => true,
-                'sort_order' => 1,
-            ],
-            [
-                'slug' => 'handbook-on-company-incorporation-and-statutory-compliance',
-                'category_id' => $categoryCorp?->id,
-                'publication_type' => 'Practice Compendium',
-                'title' => [
-                    'en' => 'Handbook on Corporate Formation & Compliance Under Companies Act 1994',
-                    'bn' => '১৯৯৪ সালের কোম্পানি আইন অনুযায়ী কোম্পানি গঠন ও বিধিবদ্ধ প্রতিপালন সহায়িকা',
-                ],
-                'publication_name' => [
-                    'en' => 'Corporate Law Advisory Bulletin',
-                    'bn' => 'কর্পোরেট আইন সহায়িকা',
-                ],
-                'publication_date' => '2024-02-12',
-                'author' => [
-                    'en' => 'Advocate Nijam Uddin (Haq)',
-                    'bn' => 'অ্যাডভোকেট নিজাম উদ্দিন (হক)',
-                ],
-                'excerpt' => [
-                    'en' => 'A structured handbook covering memorandum of association, articles of association, RJSC filings, statutory audits, and board compliance for private and public companies in Bangladesh.',
-                    'bn' => 'বাংলাদেশে প্রাইভেট ও পাবলিক লিমিটেড কোম্পানি গঠন, আরজেএসসি ফাইলিং, বার্ষিক সাধারণ সভা ও সংবিধিবদ্ধ প্রতিপালনের নির্দেশিকা।',
-                ],
-                'content' => [
-                    'en' => "<p>The Companies Act 1994 (Act XVIII of 1994) sets forth the statutory framework for corporate incorporation and administration in Bangladesh.</p><p>This compendium explains name clearance procedures, drafting memorandum and articles of association, director obligations, filing annual returns (Schedule X), and corporate secretarial best practices.</p>",
-                    'bn' => "<p>বাংলাদেশে কোম্পানি গঠন, পরিচালনা এবং পরিচালনা পর্ষদের দায়িত্ব ১৯৯৪ সালের কোম্পানি আইনের অধীনে নিয়ন্ত্রিত হয়। আরজেএসসি নেম ক্লিয়ারেন্স, স্মারকলিপি ও পরিমেল নিয়মাবলী প্রণয়ন এবং বিধিবদ্ধ রিটার্ন দাখিলের নিয়মাবলী এতে আলোচনা করা হয়েছে।</p>",
-                ],
-                'status' => 'published',
-                'visibility' => 'public',
-                'is_featured' => true,
-                'sort_order' => 2,
-            ],
-            [
-                'slug' => 'primer-on-property-conveyancing-and-registration-in-bangladesh',
-                'category_id' => $categoryComp?->id,
-                'publication_type' => 'Educational Manual',
-                'title' => [
-                    'en' => 'Essential Manual on Property Conveyancing & Title Verification',
-                    'bn' => 'স্থাবর সম্পত্তি হস্তান্তর ও দলিলের বৈধতা যাচাই নির্দেশিকা',
-                ],
-                'publication_name' => [
-                    'en' => 'Property Jurisprudence Series',
-                    'bn' => 'সম্পত্তি আইন সিরিজ',
-                ],
-                'publication_date' => '2024-03-01',
-                'author' => [
-                    'en' => 'Advocate Nijam Uddin (Haq)',
-                    'bn' => 'অ্যাডভোকেট নিজাম উদ্দিন (হক)',
-                ],
-                'excerpt' => [
-                    'en' => 'A practical guide explaining land records (CS, SA, RS, City Survey), non-encumbrance certificates, registration fees, and dispute prevention under the Registration Act 1908.',
-                    'bn' => 'সিএস, এসএ, আরএস ও সিটি জরিপ খতিয়ান যাচাই, ভূমি হস্তান্তর, দলিল রেজিস্ট্রেশন এবং সম্পত্তি বিষয়ক সম্ভাব্য বিরোধ এড়ানোর উপায়।',
-                ],
-                'content' => [
-                    'en' => "<p>Property transactions in Bangladesh require strict verification of chain of title and adherence to statutory registration formalities under the Registration Act 1908 and Transfer of Property Act 1882.</p><p>This manual covers essential due diligence: examining CS, SA, RS, and BS survey khatians, verifying mutation certificates (dakhila), searching sub-registry records, and preventing defective titles.</p>",
-                    'bn' => "<p>স্থাবর সম্পত্তি ক্রয়-বিক্রয়ে দলিলের বৈধতা ও মালিকানার ধারাবাহিকতা (Chain of Title) পরীক্ষা করা অত্যন্ত গুরুত্বপূর্ণ। জরিপ খতিয়ান, নামজারি ও সাব-রেজিস্ট্রি অফিসের রেকর্ড যাচাইয়ের ব্যবহারিক নির্দেশিকা এতে সন্নিবেশিত হয়েছে।</p>",
-                ],
-                'status' => 'published',
-                'visibility' => 'public',
-                'is_featured' => true,
-                'sort_order' => 3,
-            ],
-        ];
-
-        foreach ($publications as $pub) {
-            Publication::updateOrCreate(
-                ['slug' => $pub['slug']],
-                $pub
-            );
-        }
-    }
-
-    /**
-     * 6. Section 9: Legal Discussions & Lectures — Educational Explainer Topics.
-     */
-    protected function seedLegalExplainerTopics(): void
-    {
-        $categoryVid = Category::where('slug', 'legal-explainers')->first();
-
-        $topics = [
-            [
-                'slug' => 'understanding-legal-notice-procedure-bangladesh',
-                'category_id' => $categoryVid?->id,
-                'platform' => 'external',
-                'video_url' => 'https://bdlaws.minlaw.gov.bd/',
-                'video_id' => null,
-                'duration' => null,
-                'published_date' => '2024-01-15',
-                'title' => [
-                    'en' => 'Understanding a Legal Notice: Statutory Purpose & Proper Response',
-                    'bn' => 'আইনি নোটিশের স্বরূপ: সংবিধিবদ্ধ উদ্দেশ্য ও যথাযথ জবাব দেওয়ার নিয়ম',
-                ],
-                'description' => [
-                    'en' => 'Educational outline explaining the statutory role of formal legal notices under Section 138 of the Negotiable Instruments Act and civil disputes, procedural timeframes, and essential documentation to review before responding.',
-                    'bn' => 'এনআই অ্যাক্টের ১৩৮ ধারা এবং দেওয়ানি বিরোধে প্রেরিত আইনি নোটিশের গুরুত্ব, জবাবের সময়সীমা এবং প্রয়োজনীয় তথ্য যাচাই সংক্রান্ত নির্দেশিকা।',
-                ],
-                'status' => 'published',
-                'visibility' => 'public',
-                'is_featured' => true,
-                'sort_order' => 1,
-            ],
-            [
-                'slug' => 'preparing-documentation-for-legal-consultation',
-                'category_id' => $categoryVid?->id,
-                'platform' => 'external',
-                'video_url' => 'https://bdlaws.minlaw.gov.bd/',
-                'video_id' => null,
-                'duration' => null,
-                'published_date' => '2024-02-10',
-                'title' => [
-                    'en' => 'Preparing Documentation for an Effective Legal Consultation',
-                    'bn' => 'আইনি পরামর্শের পূর্বপ্রস্তুতি: প্রয়োজনীয় নথিপত্র ও তথ্যের সুবিন্যাস',
-                ],
-                'description' => [
-                    'en' => 'A practical checklist for clients on how to organize chronological facts, court pleadings, deeds, and statutory notices prior to a chamber conference.',
-                    'bn' => 'চেম্বারে সাক্ষাতের পূর্বে ঘটনাপঞ্জি, মূল দলিল, পূর্ববর্তী মামলার রায় বা আদেশ এবং প্রাসঙ্গিক প্রমাণাদি সুশৃঙ্খলভাবে সাজানোর গাইড।',
-                ],
-                'status' => 'published',
-                'visibility' => 'public',
-                'is_featured' => true,
-                'sort_order' => 2,
-            ],
-            [
-                'slug' => 'constitutional-remedies-and-writ-procedures-overview',
-                'category_id' => $categoryVid?->id,
-                'platform' => 'external',
-                'video_url' => 'https://bdlaws.minlaw.gov.bd/',
-                'video_id' => null,
-                'duration' => null,
-                'published_date' => '2024-03-05',
-                'title' => [
-                    'en' => 'Constitutional Remedies in the High Court: When Can a Writ Be Filed?',
-                    'bn' => 'হাইকোর্টে সাংবিধানিক প্রতিকার: কখন রিট আবেদন দায়ের করা যায়?',
-                ],
-                'description' => [
-                    'en' => 'An educational explainer detailing the 5 distinct writs under Article 102 (Mandamus, Certiorari, Prohibition, Habeas Corpus, Quo Warranto) and alternative remedy requirements.',
-                    'bn' => 'বাংলাদেশ সংবিধানের ১০২ অনুচ্ছেদে বর্ণিত ৫ ধরনের রিট (ম্যান্ডামাস, সারশিওরারাই, প্রহিবিশন, হেবিয়াস কর্পাস ও কো ওয়ারেন্টো) এবং প্রতিকারের পূর্বশর্ত।',
-                ],
-                'status' => 'published',
-                'visibility' => 'public',
-                'is_featured' => true,
-                'sort_order' => 3,
-            ],
-        ];
-
-        foreach ($topics as $top) {
-            Video::updateOrCreate(
-                ['slug' => $top['slug']],
-                $top
-            );
-        }
-    }
-
-    /**
-     * 7. Section 10: Media & Press Coverage — Legal Topics in the News.
-     */
-    protected function seedMediaPressCommentary(): void
-    {
-        $categoryMed = Category::where('slug', 'legal-journalism')->first();
-
-        $items = [
-            [
-                'slug' => 'digitization-bangladesh-subordinate-courts-causelists',
-                'category_id' => $categoryMed?->id,
-                'media_name' => [
-                    'en' => 'The Daily Star (Law & Our Rights)',
-                    'bn' => 'দ্য ডেইলি স্টার (ল অ্যান্ড আওয়ার রাইটস)',
-                ],
-                'title' => [
-                    'en' => 'Digitization of Subordinate Courts and Supreme Court Causelists',
-                    'bn' => 'অধস্তন আদালত ও সুপ্রিম কোর্টের কার্যতালিকা ডিজিটালাইজেশন উদ্যোগ',
-                ],
-                'media_type' => 'Editorial Analysis',
-                'published_date' => '2024-02-15',
-                'article_url' => 'https://www.thedailystar.net/law-our-rights',
-                'description' => [
-                    'en' => 'An overview of ongoing judicial automation, digital causelists, and the Supreme Court of Bangladesh online filing portal enhancing accessibility for litigants.',
-                    'bn' => 'বাংলাদেশ সুপ্রিম কোর্ট ও অধস্তন আদালতে ডিজিটাল কজলিস্ট, ভার্চুয়াল কোর্ট কার্যপ্রণালী এবং বিচারপ্রার্থীদের জন্য তথ্য প্রাপ্তি সহজীকরণ সংক্রান্ত পর্যালোচনা।',
-                ],
-                'status' => 'published',
-                'visibility' => 'public',
-                'is_featured' => true,
-                'sort_order' => 1,
-            ],
-            [
-                'slug' => 'companies-act-amendments-rjsc-electronic-registration',
-                'category_id' => $categoryMed?->id,
-                'media_name' => [
-                    'en' => 'Dhaka Tribune (Legal Perspectives)',
-                    'bn' => 'ঢাকা ট্রিবিউন (লিগ্যাল পারসপেক্টিভ)',
-                ],
-                'title' => [
-                    'en' => 'Amendments to the Companies Act and Electronic Registration at RJSC',
-                    'bn' => 'কোম্পানি আইনের যুগোপযোগীকরণ ও আরজেএসসি অনলাইন ফাইলিং ব্যবস্থা',
-                ],
-                'media_type' => 'Legal Commentary',
-                'published_date' => '2024-01-20',
-                'article_url' => 'https://www.dhakatribune.com',
-                'description' => [
-                    'en' => 'Review of streamlined corporate incorporation regulations, digital identity verification, and statutory return filing at the Registrar of Joint Stock Companies and Firms (RJSC).',
-                    'bn' => 'যৌথ মূলধনি কোম্পানি ও ফার্মসমূহের পরিদপ্তর (আরজেএসসি)-এ ডিজিটাল রেজিস্ট্রেশন, বার্ষিক রিটার্ন জমা ও কর্পোরেট কমপ্লায়েন্স সংক্রান্ত আইনি বিশ্লেষণ।',
-                ],
-                'status' => 'published',
-                'visibility' => 'public',
-                'is_featured' => true,
-                'sort_order' => 2,
-            ],
-            [
-                'slug' => 'nlaso-legal-aid-services-bangladesh-courts',
-                'category_id' => $categoryMed?->id,
-                'media_name' => [
-                    'en' => 'Prothom Alo (Law & Rights)',
-                    'bn' => 'প্রথম আলো (আইন ও অধিকার)',
-                ],
-                'title' => [
-                    'en' => 'Legal Aid in Subordinate Courts: National Legal Aid Services Organization',
-                    'bn' => 'অধস্তন আদালতে সরকারি আইনি সহায়তা: জাতীয় আইনগত সহায়তা প্রদান সংস্থার ভূমিকা',
-                ],
-                'media_type' => 'Institutional Review',
-                'published_date' => '2023-11-10',
-                'article_url' => 'https://www.prothomalo.com',
-                'description' => [
-                    'en' => 'Statutory framework of the Legal Aid Services Act 2000, eligibility guidelines for impoverished litigants, and chamber responsibilities in public legal assistance.',
-                    'bn' => '২০০০ সালের আইনগত সহায়তা প্রদান আইনের রূপরেখা, অসচ্ছল বিচারপ্রার্থীদের সরকারি আইনি সহায়তা প্রাপ্তির নিয়মাবলী এবং আইনি সহায়তার বিস্তার।',
-                ],
-                'status' => 'published',
-                'visibility' => 'public',
-                'is_featured' => true,
-                'sort_order' => 3,
-            ],
-            [
-                'slug' => 'bank-company-act-compliance-money-loan-court',
-                'category_id' => $categoryMed?->id,
-                'media_name' => [
-                    'en' => 'Financial Express Bangladesh',
-                    'bn' => 'ফাইন্যান্সিয়াল এক্সপ্রেস বাংলাদেশ',
-                ],
-                'title' => [
-                    'en' => 'Bank Company Act Compliance and Non-Performing Loan Recovery',
-                    'bn' => 'ব্যাংক কোম্পানি আইন প্রতিপালন ও অর্থ ঋণ আদালতের মাধ্যমে ঋণ আদায় প্রক্রিয়া',
-                ],
-                'media_type' => 'Financial Law Analysis',
-                'published_date' => '2023-09-05',
-                'article_url' => 'https://thefinancialexpress.com.bd',
-                'description' => [
-                    'en' => 'Procedural dynamics of money recovery litigation under the Artha Rin Adalat Ain 2003, auction requirements, and settlement mechanisms between lenders and borrowers.',
-                    'bn' => '২০০৩ সালের অর্থ ঋণ আদালত আইনের অধীনে খেলাপি ঋণ আদায়, সম্পত্তি নিলামের শর্তাবলী এবং আইনি বিরোধ নিষ্পত্তির প্রক্রিয়া সংক্রান্ত পর্যালোচনা।',
-                ],
-                'status' => 'published',
-                'visibility' => 'public',
-                'is_featured' => true,
-                'sort_order' => 4,
-            ],
-        ];
-
-        foreach ($items as $item) {
-            MediaPress::updateOrCreate(
-                ['slug' => $item['slug']],
-                $item
-            );
-        }
-    }
-
-    /**
-     * 8. Section 11: Judicial & Chamber Gallery — Institutional Legal Heritage Album.
+     * 5. Section 11: Judicial & Chamber Gallery — Institutional Legal Heritage Album.
+     * (Uses only verified photographs of Advocate Nijam Uddin in storage).
      */
     protected function seedInstitutionalGalleryAlbum(): void
     {
         $categoryGal = Category::where('slug', 'judicial-architecture')->first();
+        $userId = \App\Models\User::value('id');
 
-        // 1. Ensure Media records exist
+        // Ensure Media records exist for the 4 verified photographs
         $mediaRobes = Media::firstOrCreate(
             ['filename' => 'lawyer-court-robes.jpg', 'directory' => 'lawyer'],
             [
@@ -837,11 +511,11 @@ class HomepageContentPopulationSeeder extends Seeder
                     'bn' => 'সুপ্রিম কোর্ট তালিকাভুক্ত আইনজীবী প্রতিকৃতি',
                 ],
                 'variants' => [
-                    'thumbnail' => '/images/lawyer-court-robes.jpg',
-                    'medium' => '/images/lawyer-court-robes.jpg',
-                    'large' => '/images/lawyer-court-robes.jpg',
+                    'thumbnail' => '/storage/lawyer/lawyer-court-robes.jpg',
+                    'medium' => '/storage/lawyer/lawyer-court-robes.jpg',
+                    'large' => '/storage/lawyer/lawyer-court-robes.jpg',
                 ],
-                'uploaded_by' => 1,
+                'uploaded_by' => $userId,
             ]
         );
 
@@ -867,11 +541,11 @@ class HomepageContentPopulationSeeder extends Seeder
                     'bn' => 'সুপ্রিম কোর্ট চেম্বার লাইব্রেরিতে গবেষণারত',
                 ],
                 'variants' => [
-                    'thumbnail' => '/images/lawyer-chamber-library.jpg',
-                    'medium' => '/images/lawyer-chamber-library.jpg',
-                    'large' => '/images/lawyer-chamber-library.jpg',
+                    'thumbnail' => '/storage/lawyer/lawyer-chamber-library.jpg',
+                    'medium' => '/storage/lawyer/lawyer-chamber-library.jpg',
+                    'large' => '/storage/lawyer/lawyer-chamber-library.jpg',
                 ],
-                'uploaded_by' => 1,
+                'uploaded_by' => $userId,
             ]
         );
 
@@ -897,11 +571,11 @@ class HomepageContentPopulationSeeder extends Seeder
                     'bn' => 'সুপ্রিম কোর্ট চেম্বার পরামর্শ টেবিল',
                 ],
                 'variants' => [
-                    'thumbnail' => '/images/lawyer-chamber-desk.jpg',
-                    'medium' => '/images/lawyer-chamber-desk.jpg',
-                    'large' => '/images/lawyer-chamber-desk.jpg',
+                    'thumbnail' => '/storage/lawyer/lawyer-chamber-desk.jpg',
+                    'medium' => '/storage/lawyer/lawyer-chamber-desk.jpg',
+                    'large' => '/storage/lawyer/lawyer-chamber-desk.jpg',
                 ],
-                'uploaded_by' => 1,
+                'uploaded_by' => $userId,
             ]
         );
 
@@ -927,11 +601,11 @@ class HomepageContentPopulationSeeder extends Seeder
                     'bn' => 'এডভোকেট নিজাম উদ্দিন (হক), বাংলাদেশ সুপ্রিম কোর্ট',
                 ],
                 'variants' => [
-                    'thumbnail' => '/images/lawyer-executive.jpg',
-                    'medium' => '/images/lawyer-executive.jpg',
-                    'large' => '/images/lawyer-executive.jpg',
+                    'thumbnail' => '/storage/lawyer/lawyer-executive.jpg',
+                    'medium' => '/storage/lawyer/lawyer-executive.jpg',
+                    'large' => '/storage/lawyer/lawyer-executive.jpg',
                 ],
-                'uploaded_by' => 1,
+                'uploaded_by' => $userId,
             ]
         );
 
@@ -941,12 +615,12 @@ class HomepageContentPopulationSeeder extends Seeder
                 'category_id' => $categoryGal?->id,
                 'cover_image_id' => $mediaLibrary->id,
                 'title' => [
-                    'en' => 'Supreme Court of Bangladesh & Legal Heritage',
-                    'bn' => 'বাংলাদেশ সুপ্রিম কোর্ট ও বিচারিক ঐতিহ্য',
+                    'en' => 'Supreme Court of Bangladesh & Chamber Heritage',
+                    'bn' => 'বাংলাদেশ সুপ্রিম কোর্ট ও চেম্বার ঐতিহ্য',
                 ],
                 'description' => [
-                    'en' => 'Photographic archive of the Supreme Court of Bangladesh, established under the 1972 Constitution, showcasing its iconic architecture and courtroom institutions.',
-                    'bn' => '১৯৭২ সালের সংবিধানের অধীনে প্রতিষ্ঠিত বাংলাদেশ সুপ্রিম কোর্টের ঐতিহ্যবাহী চত্বর ও বিচারিক কাঠামোর আলোকচিত্র সংগ্রহ।',
+                    'en' => 'Photographic documentation of Supreme Court advocacy practice, chamber law library precedent research, and consultation desks.',
+                    'bn' => 'বাংলাদেশ সুপ্রিম কোর্টে পেশাগত অনুশীলন, চেম্বার লাইব্রেরিতে নজির ও আইন পর্যালোচনা এবং পরামর্শ সংক্রান্ত প্রামাণ্য স্থিরচিত্র।',
                 ],
                 'event_date' => '2024-01-01',
                 'status' => 'published',
@@ -956,7 +630,7 @@ class HomepageContentPopulationSeeder extends Seeder
             ]
         );
 
-        // 2. Attach images to the album
+        // Attach images to the album
         $albumImages = [
             ['media' => $mediaRobes, 'order' => 1, 'caption' => ['en' => 'Supreme Court Advocate Robes Portrait', 'bn' => 'সুপ্রিম কোর্ট গাউন পরিহিত প্রাতিষ্ঠানিক প্রতিকৃতি']],
             ['media' => $mediaLibrary, 'order' => 2, 'caption' => ['en' => 'Chamber Legal Library & Precedent Research', 'bn' => 'চেম্বার লাইব্রেরিতে আইন গ্রন্থ ও নজির পর্যালোচনা']],
@@ -981,67 +655,13 @@ class HomepageContentPopulationSeeder extends Seeder
     }
 
     /**
-     * 9. Update all 12 Homepage Sections & Global CTA Settings with Approved Copy.
+     * 6. Update Homepage Sections.
+     * Preserves existing approved hero, credentials, and about_preview content.
+     * Enables sections with valid content; disables evidence-dependent sections that lack verified sources.
      */
     protected function updateHomepageSectionsAndCta(): void
     {
-        $sectionsConfig = [
-            'hero' => [
-                'title' => [
-                    'en' => 'Advocate Nijam Uddin (Haq)',
-                    'bn' => 'অ্যাডভোকেট নিজাম উদ্দিন (হক)',
-                ],
-                'subtitle' => [
-                    'en' => 'Constitutional Justice & Principled Legal Advocacy',
-                    'bn' => 'সাংবিধানিক ন্যায়বিচার ও নীতিবান আইনি লড়াইয়ে নিবেদিত',
-                ],
-                'content' => [
-                    'en' => 'Dedicated legal counsel and judicial advocacy before the Supreme Court of Bangladesh, specializing in constitutional writ petitions, civil litigation, and corporate advisory.',
-                    'bn' => 'বাংলাদেশ সুপ্রিম কোর্টের হাইকোর্ট বিভাগে সাংবিধানিক রিট, দেওয়ানি বিরোধ ও আপিল মামলায় বিশ্বস্ত ও নির্ভরযোগ্য আইনি প্রতিনিধিত্ব।',
-                ],
-                'settings' => [
-                    'limit' => 1,
-                    'image_url' => '/images/portrait-nijamuddin.jpg',
-                    'cta_label' => ['en' => 'Schedule Consultation', 'bn' => 'পরামর্শের জন্য যোগাযোগ'],
-                    'cta_url' => '/contact',
-                    'secondary_cta_label' => ['en' => 'Explore Practice Areas', 'bn' => 'আইনি কর্মক্ষেত্রসমূহ'],
-                    'secondary_cta_url' => '/practice-areas',
-                ],
-            ],
-            'about_preview' => [
-                'title' => [
-                    'en' => 'About the Chamber',
-                    'bn' => 'চেম্বার পরিচিতি ও পরিচালনা নীতি',
-                ],
-                'subtitle' => [
-                    'en' => 'Ethical Practice & Due Diligence',
-                    'bn' => 'পেশাগত নীতিশাস্ত্র ও নিষ্ঠা',
-                ],
-                'content' => [
-                    'en' => "Our chamber practice is founded on uncompromised legal ethics, meticulous case analysis, and procedural diligence before the court. We prioritize client confidentiality and rigorous preparation under Bangladesh law.",
-                    'bn' => 'আমাদের চেম্বার আপসহীন পেশাগত নীতিশাস্ত্র, তথ্যের পুঙ্খানুপুঙ্খ বিশ্লেষণ এবং আদালতের প্রতিটি ধাপে সতর্ক প্রস্তুতির ওপর প্রতিষ্ঠিত। আমরা মক্কেলের তথ্যের সর্বোচ্চ গোপনীয়তা ও আইনি সুরক্ষায় প্রতিশ্রুতিবদ্ধ।',
-                ],
-                'settings' => [
-                    'image_url' => '/images/lawyer-chamber-library.jpg',
-                ],
-            ],
-            'credentials' => [
-                'title' => [
-                    'en' => 'Institutional Standing & Credentials',
-                    'bn' => 'সনদ ও প্রাতিষ্ঠানিক মর্যাদা',
-                ],
-                'subtitle' => [
-                    'en' => 'Academic Rigor & Supreme Court Enrolment',
-                    'bn' => 'সুপ্রিম কোর্ট তালিকাভুক্তি ও পেশাগত স্বীকৃতি',
-                ],
-                'content' => [
-                    'en' => 'Verified academic qualifications and professional credentials reflecting disciplined legal education and certified standing before the Supreme Court of Bangladesh.',
-                    'bn' => 'বাংলাদেশ বার কাউন্সিল ও সুপ্রিম কোর্ট তালিকাভুক্ত আইনজীবী হিসেবে প্রাতিষ্ঠানিক স্বীকৃতি ও ডিগ্রি।',
-                ],
-                'settings' => [
-                    'limit' => 4,
-                ],
-            ],
+        $sectionsToUpdate = [
             'practice_areas' => [
                 'title' => [
                     'en' => 'Core Practice Areas',
@@ -1055,9 +675,8 @@ class HomepageContentPopulationSeeder extends Seeder
                     'en' => 'Providing structured legal counsel, representation, and strategic advisory across major domains of Bangladesh law.',
                     'bn' => 'বাংলাদেশ সুপ্রিম কোর্ট ও সংশ্লিষ্ট আদালতে প্রচলিত প্রধান প্রধান শাখায় আইনি পরামর্শ ও কার্যকর প্রতিনিধিত্ব।',
                 ],
-                'settings' => [
-                    'limit' => 6,
-                ],
+                'is_enabled' => true,
+                'settings' => ['limit' => 6],
             ],
             'courtroom' => [
                 'title' => [
@@ -1065,33 +684,31 @@ class HomepageContentPopulationSeeder extends Seeder
                     'bn' => 'আদালতের কার্যপ্রণালী ও আইনি গাইড',
                 ],
                 'subtitle' => [
-                    'en' => 'Practical Steps in the High Court Division',
+                    'en' => 'Procedural Steps in the Supreme Court & Subordinate Courts',
                     'bn' => 'মামলা পরিচালনা ও শুনানির ধারাবাহিক পর্যায়',
                 ],
                 'content' => [
-                    'en' => 'Clear, practical guidance on how cases proceed through the High Court Division and subordinate courts, explaining statutory provisions and judicial precedents.',
+                    'en' => 'Clear, practical guidance on how legal matters proceed through the High Court Division and subordinate courts under Bangladesh law.',
                     'bn' => 'বাংলাদেশ সুপ্রিম কোর্ট ও অধস্তন আদালতে মামলা দায়ের, অন্তর্বর্তীকালীন আদেশ এবং যুক্তিতর্কের নিয়মাবলি সংক্রান্ত নির্দেশিকা।',
                 ],
-                'settings' => [
-                    'limit' => 3,
-                ],
+                'is_enabled' => true,
+                'settings' => ['limit' => 3],
             ],
             'judgment_reviews' => [
                 'title' => [
-                    'en' => 'Landmark Judicial Decisions',
+                    'en' => 'Landmark Judgment Reviews',
                     'bn' => 'ঐতিহাসিক রায় ও বিচারিক নজির',
                 ],
                 'subtitle' => [
-                    'en' => 'Supreme Court Precedents & Constitutional Analyses',
-                    'bn' => 'সুপ্রিম কোর্টের যুগান্তকারী রায়ের সারসংক্ষেপ',
+                    'en' => 'Analytical Insights into Leading Supreme Court Decisions',
+                    'bn' => 'সুপ্রিম কোর্টের যুগান্তকারী রায়ের প্রাতিষ্ঠানিক পর্যালোচনা',
                 ],
                 'content' => [
-                    'en' => 'Analytical reviews of landmark judgments delivered by the Supreme Court of Bangladesh, examining constitutional rights, statutory interpretation, and judicial principles.',
+                    'en' => 'In-depth briefings examining constitutional principles, statutory interpretations, and established ratios in landmark decisions.',
                     'bn' => 'মৌলিক অধিকার সুরক্ষা ও আইনের শাসন প্রতিষ্ঠায় বাংলাদেশ সুপ্রিম কোর্টের ঐতিহাসিক রায়ের বিশ্লেষণমূলক পর্যালোচনা।',
                 ],
-                'settings' => [
-                    'limit' => 3,
-                ],
+                'is_enabled' => true,
+                'settings' => ['limit' => 3],
             ],
             'research' => [
                 'title' => [
@@ -1099,146 +716,62 @@ class HomepageContentPopulationSeeder extends Seeder
                     'bn' => 'আইনি গবেষণা ও সন্দর্ভ',
                 ],
                 'subtitle' => [
-                    'en' => 'Scholarly Analyses of Bangladesh Law',
-                    'bn' => 'আইনের মৌলিক নীতিমালা ও বিশ্লেষণ',
+                    'en' => 'Scholarly Inquiries & Statutory Analyses',
+                    'bn' => 'আইনশাস্ত্র ও সংবিধিবদ্ধ আইনের বিশ্লেষণ',
                 ],
                 'content' => [
-                    'en' => 'In-depth legal papers examining constitutional rights, commercial arbitration, and procedural jurisprudence in Bangladesh.',
-                    'bn' => 'বাংলাদেশের সংবিধান, দেওয়ানি কার্যপ্রণালী এবং সালিশি আইন সংক্রান্ত মৌলিক ও গভীর আইনি গবেষণা।',
+                    'en' => 'Legal research examining grassroots dispute resolution, constitutional review under Article 102, and statutory arbitration frameworks in Bangladesh.',
+                    'bn' => 'তৃণমূল পর্যায়ে গ্রাম আদালতের কার্যকারিতা, সংবিধানের ১০২ অনুচ্ছেদ এবং সালিশি আইন সংক্রান্ত গবেষণা ও আইনি পর্যালোচনা।',
                 ],
-                'settings' => [
-                    'limit' => 3,
-                ],
-            ],
-            'publications' => [
-                'title' => [
-                    'en' => 'Legal Publications & Resources',
-                    'bn' => 'আইনি প্রকাশনা ও দিকনির্দেশনা',
-                ],
-                'subtitle' => [
-                    'en' => 'Compendiums on Law and Judicial Practice',
-                    'bn' => 'আইন ও আদালতের অনুশীলন সংক্রান্ত তথ্যমূলক সংকলন',
-                ],
-                'content' => [
-                    'en' => 'Curated legal educational resources, procedural guides, and statutory compendiums for citizens and practitioners.',
-                    'bn' => 'নাগরিক ও আইন শিক্ষার্থীদের সচেতনতার জন্য প্রণীত তথ্যমূলক আইনি গাইড ও সংবিধি পর্যালোচনা।',
-                ],
-                'settings' => [
-                    'limit' => 3,
-                ],
-            ],
-            'videos' => [
-                'title' => [
-                    'en' => 'Legal Explainers & Discussions',
-                    'bn' => 'আইনি আলোচনা ও বিশ্লেষণ',
-                ],
-                'subtitle' => [
-                    'en' => 'Practical Insights on Common Legal Procedures',
-                    'bn' => 'নাগরিক অধিকার ও কার্যপ্রণালী সংক্রান্ত আলোচনা',
-                ],
-                'content' => [
-                    'en' => 'Structured video discussions and explainers covering essential legal procedures, notices, and documentation in Bangladesh.',
-                    'bn' => 'বাংলাদেশে প্রচলিত আইনি নোটিশ, মামলার নথিপত্র প্রস্তুত এবং আদালতের প্রক্রিয়া সংক্রান্ত আলোচনা।',
-                ],
-                'settings' => [
-                    'limit' => 3,
-                ],
-            ],
-            'media' => [
-                'title' => [
-                    'en' => 'Legal News & Commentary',
-                    'bn' => 'আইনি খবর ও গণমাধ্যম পর্যালোচনা',
-                ],
-                'subtitle' => [
-                    'en' => 'Contemporary Legal Developments in Bangladesh',
-                    'bn' => 'সমসাময়িক আইনি সংস্কার ও বিচারিক খবরের বিশ্লেষণ',
-                ],
-                'content' => [
-                    'en' => 'Commentaries on major statutory amendments, judicial directives, and law reform debates in Bangladesh.',
-                    'bn' => 'জাতীয় গণমাধ্যমে আলোচিত আইন সংস্কার, সুপ্রিম কোর্টের নির্দেশনা এবং আইনি খবরের সারসংক্ষেপ।',
-                ],
-                'settings' => [
-                    'limit' => 4,
-                ],
+                'is_enabled' => true,
+                'settings' => ['limit' => 3],
             ],
             'gallery' => [
                 'title' => [
                     'en' => 'Chamber & Institutional Heritage',
-                    'bn' => 'চেম্বার ও বিচারিক ঐতিহ্য গ্যালারি',
+                    'bn' => 'চেম্বার ও প্রাতিষ্ঠানিক ঐতিহ্য',
                 ],
                 'subtitle' => [
-                    'en' => 'Photographic Archive of Supreme Court Chambers',
-                    'bn' => 'সুপ্রিম কোর্ট ও চেম্বার জীবনের আলোকচিত্র',
+                    'en' => 'Photographic Documentation of Supreme Court Chambers',
+                    'bn' => 'সুপ্রিম কোর্ট চেম্বার ও আইনচর্চার আলোকচিত্র',
                 ],
                 'content' => [
-                    'en' => 'Photographic documentation of Supreme Court practice, chamber library research, and legal assemblies.',
-                    'bn' => 'বাংলাদেশ সুপ্রিম কোর্ট, চেম্বার লাইব্রেরি এবং আইনচর্চার ঐতিহ্যবাহী আলোকচিত্র সংগ্রহ।',
+                    'en' => 'Photographs of the advocate in Supreme Court practice robes, chamber law library, and legal conference workspace.',
+                    'bn' => 'বাংলাদেশ সুপ্রিম কোর্ট, চেম্বার লাইব্রেরি এবং পরামর্শ ডেস্কের প্রামাণ্য স্থিরচিত্র।',
                 ],
-                'settings' => [
-                    'limit' => 6,
-                ],
+                'is_enabled' => true,
+                'settings' => ['limit' => 6],
             ],
-            'consultation_cta' => [
-                'title' => [
-                    'en' => 'Discuss Your Legal Matter',
-                    'bn' => 'আপনার আইনি বিষয়ে পরামর্শ গ্রহণ করুন',
-                ],
-                'subtitle' => [
-                    'en' => 'Supreme Court Chambers — High Court Division',
-                    'bn' => 'সুপ্রিম কোর্ট চেম্বার — হাইকোর্ট বিভাগ',
-                ],
-                'content' => [
-                    'en' => 'Request a consultation to discuss your legal concerns. The next steps depend on the nature of your matter, the available information, and the applicable legal process.',
-                    'bn' => 'আপনার আইনি সমস্যা ও প্রতিকার নিয়ে সরাসরি আলোচনার জন্য পরামর্শের অনুরোধ জানান। প্রতিটি পদক্ষেপের অগ্রগতি সুনির্দিষ্ট তথ্যাবলী, প্রাসঙ্গিক প্রমাণ এবং নির্ধারিত আইনি প্রক্রিয়ার ওপর নির্ভর করে।',
-                ],
-                'settings' => [
-                    'cta_label' => ['en' => 'Request a Consultation', 'bn' => 'পরামর্শের জন্য যোগাযোগ'],
-                    'cta_url' => '/contact',
-                    'secondary_cta_label' => ['en' => 'Contact Chamber', 'bn' => 'চেম্বার যোগাযোগ'],
-                    'secondary_cta_url' => '/contact',
-                ],
+            // Sections requiring source evidence that are not yet verified: safely keep disabled
+            'publications' => [
+                'is_enabled' => false,
+            ],
+            'videos' => [
+                'is_enabled' => false,
+            ],
+            'media' => [
+                'is_enabled' => false,
             ],
         ];
 
-        foreach ($sectionsConfig as $key => $conf) {
+        foreach ($sectionsToUpdate as $key => $conf) {
             $section = HomepageSection::where('section_key', $key)->first();
             if ($section) {
-                $section->title = $conf['title'];
-                $section->subtitle = $conf['subtitle'];
-                $section->content = $conf['content'];
+                if (isset($conf['title'])) {
+                    $section->title = $conf['title'];
+                }
+                if (isset($conf['subtitle'])) {
+                    $section->subtitle = $conf['subtitle'];
+                }
+                if (isset($conf['content'])) {
+                    $section->content = $conf['content'];
+                }
                 if (isset($conf['settings'])) {
                     $section->settings = array_merge($section->settings ?? [], $conf['settings']);
                 }
-                $section->is_enabled = true;
+                $section->is_enabled = $conf['is_enabled'];
                 $section->save();
             }
-        }
-
-        // Update SiteSetting for Global CTA
-        $globalCtaSetting = SiteSetting::where('group', 'cta')->where('key', 'global_cta')->first();
-        if ($globalCtaSetting) {
-            $globalCtaSetting->value = [
-                'is_enabled' => true,
-                'heading' => [
-                    'en' => 'Discuss Your Legal Matter',
-                    'bn' => 'আপনার আইনি বিষয়ে পরামর্শ গ্রহণ করুন',
-                ],
-                'subheading' => [
-                    'en' => 'Request a consultation to discuss your legal concerns. The next steps depend on the nature of your matter, the available information, and the applicable legal process.',
-                    'bn' => 'আপনার আইনি সমস্যা ও প্রতিকার নিয়ে সরাসরি আলোচনার জন্য পরামর্শের অনুরোধ জানান। প্রতিটি পদক্ষেপের অগ্রগতি সুনির্দিষ্ট তথ্যাবলী, প্রাসঙ্গিক প্রমাণ এবং নির্ধারিত আইনি প্রক্রিয়ার ওপর নির্ভর করে।',
-                ],
-                'primary_button_label' => [
-                    'en' => 'Request a Consultation',
-                    'bn' => 'পরামর্শের জন্য যোগাযোগ',
-                ],
-                'primary_button_url' => '/contact',
-                'secondary_button_label' => [
-                    'en' => 'Contact Chamber',
-                    'bn' => 'চেম্বার যোগাযোগ',
-                ],
-                'secondary_button_url' => '/contact',
-            ];
-            $globalCtaSetting->save();
         }
     }
 }

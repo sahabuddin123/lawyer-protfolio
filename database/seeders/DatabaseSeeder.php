@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             HomepageSectionSeeder::class,
             ProfileAndCredentialsSeeder::class,
             PracticeAreaSeeder::class,
+            HomepageContentPopulationSeeder::class,
         ]);
     }
 }
