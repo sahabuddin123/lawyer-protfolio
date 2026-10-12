@@ -73,9 +73,9 @@ export const PublicationCard: React.FC<PublicationCardProps> = ({
           <button
             type="button"
             onClick={onReadMore}
-            className="text-xs font-semibold tracking-wider uppercase text-gold-primary hover:text-gold-hover inline-flex items-center gap-1.5 cursor-pointer"
+            className="text-xs font-semibold text-gold-primary hover:text-gold-hover hover:underline inline-flex items-center gap-1.5 cursor-pointer transition-colors"
           >
-            <span>Review Treatise</span>
+            <span>Read Publication</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </button>
 

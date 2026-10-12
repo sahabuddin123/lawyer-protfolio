@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { LazyImage } from '@/components/ui/LazyImage';
 import { Play, BookOpen } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -60,9 +59,9 @@ export const VideoCard: React.FC<VideoCardProps> = ({
 
         {/* Top Badges */}
         <div className="absolute top-3 left-3">
-          <Badge variant="gold" size="sm">
+          <span className="text-[11px] font-mono font-medium text-amber-300 bg-slate-950/85 backdrop-blur-sm border border-amber-500/30 px-2.5 py-1 rounded-md">
             {category}
-          </Badge>
+          </span>
         </div>
 
         {/* Duration Badge */}

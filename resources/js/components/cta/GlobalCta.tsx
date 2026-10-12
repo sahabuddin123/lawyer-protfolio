@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
-import { ArrowRight, ShieldCheck, Mail, Calendar } from 'lucide-react';
+import { ArrowRight, Mail, Calendar } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { cmsApi } from '@/api/cms';
 
@@ -117,15 +117,6 @@ export const GlobalCta: React.FC<GlobalCtaProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Left Column: Heading and Description */}
             <div className="lg:col-span-8 space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-subtle/50 border border-gold-border/60">
-                <ShieldCheck className="w-3.5 h-3.5 text-gold-primary" />
-                <span className="text-[11px] font-semibold tracking-widest uppercase text-gold-primary font-mono">
-                  {locale === 'bn'
-                    ? 'বাংলাদেশ সুপ্রিম কোর্ট — চেম্বার সম্মেলন'
-                    : 'Supreme Court Chambers — High Court Division'}
-                </span>
-              </div>
-
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif-editorial font-bold text-text-primary leading-tight">
                 {heading}
               </h2>

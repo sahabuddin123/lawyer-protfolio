@@ -23,6 +23,8 @@ export interface HomeHeroData {
   bar_council_enrollment?: string;
   high_court_enrollment?: string;
   appellate_division_enrollment?: string;
+  district_court_enrollment?: string;
+  district_court_badge?: string;
   supreme_court_status?: string;
   verified_credentials?: CredentialItem[];
   primary_cta_label?: Localized | string;

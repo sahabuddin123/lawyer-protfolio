@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Phone, Mail, MapPin, Clock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, ArrowRight } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { resolveLocalized } from '@/utils/localized';
 import type { HomeConsultationCtaData } from '@/types/home';
@@ -23,7 +23,6 @@ export const ConsultationCtaSection: React.FC<ConsultationCtaSectionProps> = ({
   const { t, locale } = useTranslation();
   const navigate = useNavigate();
 
-  const eyebrow = resolveLocalized(sectionConfig?.subtitle, locale) || t.sections.contactEyebrow;
   const title =
     resolveLocalized(cta.title, locale) ||
     resolveLocalized(sectionConfig?.title, locale) ||
@@ -59,13 +58,6 @@ export const ConsultationCtaSection: React.FC<ConsultationCtaSectionProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             {/* Left Narrative */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gold-subtle/40 border border-gold-border/60">
-                <ShieldCheck className="w-4 h-4 text-gold-primary" />
-                <span className="text-xs font-semibold tracking-widest uppercase text-gold-primary font-mono">
-                  {eyebrow}
-                </span>
-              </div>
-
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif-editorial font-bold text-text-primary leading-tight">
                 {title}
               </h2>

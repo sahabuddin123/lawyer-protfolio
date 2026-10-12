@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { cn } from '@/utils/cn';
-import { ImageOff } from 'lucide-react';
 
 export type AspectRatioType = '1/1' | '16/9' | '4/3' | '3/4' | '2/3' | 'auto';
 
@@ -23,8 +22,25 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   priority = false,
   ...props
 }) => {
+  const [currentSrc, setCurrentSrc] = useState(src);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const imgRef = React.useRef<HTMLImageElement>(null);
+
+  React.useEffect(() => {
+    setCurrentSrc(src);
+    setHasError(false);
+    setIsLoaded(false);
+  }, [src]);
+
+  React.useEffect(() => {
+    if (imgRef.current && imgRef.current.complete) {
+      if (imgRef.current.naturalWidth > 0) {
+        setIsLoaded(true);
+        setHasError(false);
+      }
+    }
+  }, [currentSrc]);
 
   const aspectRatioClasses: Record<AspectRatioType, string> = {
     '1/1': 'aspect-square',
@@ -37,9 +53,14 @@ export const LazyImage: React.FC<LazyImageProps> = ({
 
   const handleLoad = () => {
     setIsLoaded(true);
+    setHasError(false);
   };
 
   const handleError = () => {
+    if (fallbackSrc && currentSrc !== fallbackSrc) {
+      setCurrentSrc(fallbackSrc);
+      return;
+    }
     setHasError(true);
     setIsLoaded(true);
   };
@@ -58,13 +79,17 @@ export const LazyImage: React.FC<LazyImageProps> = ({
       )}
 
       {hasError ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface p-4 text-center">
-          <ImageOff className="w-8 h-8 text-text-subtle mb-2" aria-hidden="true" />
-          <span className="text-xs text-text-muted">Image unavailable</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-slate-950 p-6 text-center border border-amber-500/20">
+          <div className="w-16 h-16 rounded-full border border-amber-500/40 bg-amber-500/10 flex items-center justify-center text-amber-400 mb-3 shadow-sm">
+            <span className="font-serif text-xl font-bold tracking-wider">NH</span>
+          </div>
+          <span className="font-serif text-sm text-slate-200 font-bold block">{alt || 'Advocate Nijam Uddin'}</span>
+          <span className="text-[11px] text-amber-400/80 uppercase font-mono tracking-wider mt-1">Supreme Court of Bangladesh</span>
         </div>
       ) : (
         <img
-          src={src}
+          ref={imgRef}
+          src={currentSrc}
           alt={alt}
           loading={priority ? 'eager' : 'lazy'}
           decoding={priority ? 'sync' : 'async'}

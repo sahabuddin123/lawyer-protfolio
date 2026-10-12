@@ -57,6 +57,7 @@ export const ResearchSection: React.FC<ResearchSectionProps> = ({
               date={dateStr}
               readTime={readTimeStr}
               author={author}
+              actionLabel={locale === 'bn' ? 'গবেষণা প্রবন্ধ পড়ুন' : 'Read Article'}
               onReadArticle={() => navigate(`/research/${item.slug}`)}
             />
           );

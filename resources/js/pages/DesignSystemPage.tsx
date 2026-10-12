@@ -103,6 +103,7 @@ export const DesignSystemPage: React.FC = () => {
         }}
         credentialsBadge="Advocate, Supreme Court of Bangladesh"
         experienceBadge="LL.B. (Hons), LL.M. (Univ. of Chittagong)"
+        districtCourtBadge="Noakhali Judge Court"
         portraitUrl="https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&w=1000&q=80"
       />
 

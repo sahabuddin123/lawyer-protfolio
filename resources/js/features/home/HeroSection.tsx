@@ -20,12 +20,21 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   const { t, locale } = useTranslation();
   const navigate = useNavigate();
 
-  const eyebrow = resolveLocalized(sectionConfig?.subtitle, locale) || t.sections.heroEyebrow;
-  const name = resolveLocalized(hero.name, locale) || t.identity.lawyerName;
-  const professionalTitle =
-    resolveLocalized(hero.professional_title || hero.title, locale) ||
-    t.identity.designation;
-  const headline = resolveLocalized(sectionConfig?.title, locale) || t.sections.heroHeadline;
+  const lawyerName = resolveLocalized(hero.name, locale) || t.identity.lawyerName || 'Advocate Nijam Uddin (Haq)';
+  const configuredTitle = resolveLocalized(sectionConfig?.title, locale);
+  const configuredSubtitle = resolveLocalized(sectionConfig?.subtitle, locale);
+
+  const isTitleName = Boolean(configuredTitle && (configuredTitle.toLowerCase().includes('nijam') || configuredTitle.toLowerCase().includes('নিজাম')));
+  const headingText = isTitleName ? configuredTitle : lawyerName;
+
+  const subtitleText = !isTitleName && configuredTitle
+    ? configuredTitle
+    : (configuredSubtitle || (locale === 'bn' ? 'অ্যাডভোকেট, বাংলাদেশ সুপ্রিম কোর্ট — হাইকোর্ট বিভাগ' : 'Advocate, Supreme Court of Bangladesh — High Court Division'));
+
+  const eyebrowText = (configuredSubtitle && configuredSubtitle !== subtitleText)
+    ? configuredSubtitle
+    : (locale === 'bn' ? 'বাংলাদেশ সুপ্রিম কোর্ট • হাইকোর্ট বিভাগ' : 'Supreme Court of Bangladesh • High Court Division');
+
   const description =
     resolveLocalized(hero.short_bio, locale) ||
     resolveLocalized(sectionConfig?.content, locale) ||
@@ -68,35 +77,35 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
   // Badges from verified data
   const credentialsBadge =
-    hero.supreme_court_status ||
+    (sectionConfig?.settings as any)?.credentials_badge ||
     hero.bar_council_enrollment ||
     (locale === 'bn' ? 'বাংলাদেশ বার কাউন্সিল' : 'Bangladesh Bar Council');
 
   const experienceBadge =
-    resolveLocalized(hero.designation, locale) ||
-    (locale === 'bn' ? 'সুপ্রিম কোর্ট অব বাংলাদেশ' : 'Supreme Court of Bangladesh');
+    (sectionConfig?.settings as any)?.experience_badge ||
+    hero.supreme_court_status ||
+    (locale === 'bn' ? 'বাংলাদেশ সুপ্রিম কোর্ট' : 'Supreme Court of Bangladesh');
+
+  const districtCourtBadge =
+    (sectionConfig?.settings as any)?.district_court_badge ||
+    hero.district_court_badge ||
+    (locale === 'bn' ? 'নোয়াখালী জজ কোর্ট' : 'Noakhali Judge Court');
 
   return (
     <Hero
-      eyebrow={eyebrow}
-      title={
-        <span>
-          {name}
-          <span className="block text-2xl sm:text-3xl md:text-4xl text-gold-primary font-normal mt-2">
-            {headline}
-          </span>
-        </span>
-      }
-      subtitle={professionalTitle}
+      eyebrow={eyebrowText}
+      title={headingText}
+      subtitle={subtitleText}
       description={description}
       primaryCtaText={primaryCtaText}
       onPrimaryCtaClick={handlePrimaryClick}
       secondaryCtaText={secondaryCtaText}
       onSecondaryCtaClick={handleSecondaryClick}
       portraitUrl={portraitUrl}
-      portraitAlt={name}
+      portraitAlt={headingText}
       credentialsBadge={credentialsBadge}
       experienceBadge={experienceBadge}
+      districtCourtBadge={districtCourtBadge}
     />
   );
 };

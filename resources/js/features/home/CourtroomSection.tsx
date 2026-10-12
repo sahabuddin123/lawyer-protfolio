@@ -54,6 +54,8 @@ export const CourtroomSection: React.FC<CourtroomSectionProps> = ({
               caseNumber={item.case_number || undefined}
               summary={summary}
               imageUrl={imageUrl}
+              badgeLabel={locale === 'bn' ? 'আইনি কার্যপ্রণালী' : 'Procedural Guide'}
+              actionLabel={locale === 'bn' ? 'গাইড বিস্তারিত' : 'Explore Guide'}
               onReadCase={() => navigate(`/courtroom/${item.slug}`)}
             />
           );

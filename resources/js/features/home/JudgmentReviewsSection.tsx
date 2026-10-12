@@ -2,9 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HomeSectionWrapper } from './HomeSectionWrapper';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { ArrowRight, Scale, Calendar, Gavel } from 'lucide-react';
+import { ArrowRight, Scale, Calendar, Gavel, UserCheck } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { resolveLocalized } from '@/utils/localized';
 import type { JudgmentReview } from '@/types/judgment';
@@ -51,19 +50,23 @@ export const JudgmentReviewsSection: React.FC<JudgmentReviewsSectionProps> = ({
           return (
             <Card
               key={review.id}
-              className="p-6 md:p-8 flex flex-col justify-between h-full group hover:border-gold-border/80 transition-all border border-border-subtle"
+              className="p-7 md:p-8 flex flex-col justify-between h-full group bg-surface/90 hover:bg-surface-elevated/40 border border-border-subtle hover:border-gold-border/80 shadow-lg hover:shadow-2xl transition-all duration-300 rounded-xl relative overflow-hidden"
             >
-              <div className="space-y-4">
+              {/* Subtle ambient corner glow */}
+              <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+
+              <div className="space-y-5 relative z-10">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="gold" size="sm">
-                      {review.court}
-                    </Badge>
+                  <div className="flex flex-wrap items-center gap-2">
                     {review.citation && (
-                      <span className="text-xs font-mono font-semibold text-gold-secondary px-2 py-0.5 rounded bg-surface-elevated border border-border-subtle">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-md shadow-sm">
+                        <Gavel className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                         {review.citation}
                       </span>
                     )}
+                    <span className="text-xs font-mono text-slate-300 bg-slate-900/90 px-2.5 py-1 rounded-md border border-slate-800">
+                      {review.court}
+                    </span>
                   </div>
 
                   {review.judgment_date && (
@@ -79,18 +82,18 @@ export const JudgmentReviewsSection: React.FC<JudgmentReviewsSectionProps> = ({
                 </h3>
 
                 {summary && (
-                  <p className="text-sm text-text-muted leading-relaxed line-clamp-3">
+                  <p className="text-sm text-text-muted leading-relaxed line-clamp-3 font-normal">
                     {summary}
                   </p>
                 )}
 
-                {/* Strict Boundary: Court's Decision vs Author's Analysis */}
-                <div className="space-y-3 pt-2">
+                {/* Precedent Breakdown: Court Decision vs Author Jurisprudential Analysis */}
+                <div className="space-y-3 pt-1">
                   {courtDecision && (
-                    <div className="p-3.5 rounded bg-surface-elevated/70 border border-border-subtle/80 space-y-1">
+                    <div className="p-3.5 rounded-lg bg-surface-elevated/80 border border-border-subtle/80 space-y-1">
                       <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-text-secondary font-semibold">
-                        <Gavel className="w-3.5 h-3.5 text-text-muted" />
-                        <span>{locale === 'bn' ? 'আদালতের সিদ্ধান্ত' : "Court's Decision"}</span>
+                        <Gavel className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{locale === 'bn' ? 'আদালতের সিদ্ধান্ত ও মূল নীতি' : "Court's Precedent & Ratio"}</span>
                       </div>
                       <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">
                         {courtDecision}
@@ -99,10 +102,10 @@ export const JudgmentReviewsSection: React.FC<JudgmentReviewsSectionProps> = ({
                   )}
 
                   {authorAnalysis && (
-                    <div className="p-3.5 rounded bg-gold-subtle/30 border border-gold-border/40 space-y-1">
+                    <div className="p-3.5 rounded-lg bg-gold-subtle/30 border border-gold-border/40 space-y-1">
                       <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-gold-primary font-semibold">
                         <Scale className="w-3.5 h-3.5 text-gold-primary" />
-                        <span>{locale === 'bn' ? 'আইনজীবীর বিশ্লেষণ' : "Author's Jurisprudential Analysis"}</span>
+                        <span>{locale === 'bn' ? 'আইনজীবীর বিশ্লেষণ' : "Chamber Analysis & Significance"}</span>
                       </div>
                       <p className="text-xs text-text-primary leading-relaxed line-clamp-2">
                         {authorAnalysis}
@@ -112,15 +115,20 @@ export const JudgmentReviewsSection: React.FC<JudgmentReviewsSectionProps> = ({
                 </div>
               </div>
 
-              <div className="pt-6 mt-6 border-t border-border-subtle flex items-center justify-between">
+              <div className="pt-6 mt-6 border-t border-border-subtle flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-1.5 text-xs text-gold-secondary font-medium">
+                  <UserCheck className="w-3.5 h-3.5 text-gold-primary" />
+                  <span>Advocate Nijam Uddin (Haq)</span>
+                </div>
+
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate(`/judgments/${review.slug}`)}
-                  rightIcon={<ArrowRight className="w-4 h-4" />}
-                  className="px-0 hover:bg-transparent text-gold-primary hover:text-gold-hover"
+                  rightIcon={<ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />}
+                  className="px-0 hover:bg-transparent text-gold-primary hover:text-gold-hover font-semibold"
                 >
-                  {t.common.viewDetails}
+                  {locale === 'bn' ? 'সম্পূর্ণ বিশ্লেষণ দেখুন' : 'Read Precedent Analysis'}
                 </Button>
               </div>
             </Card>

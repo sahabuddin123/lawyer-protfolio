@@ -57,8 +57,8 @@ export const PracticeAreaCard: React.FC<PracticeAreaCardProps> = ({
         </p>
       </div>
 
-      <div className="pt-6 mt-6 border-t border-border-subtle/60 flex items-center justify-between text-xs font-medium text-gold-primary tracking-wider uppercase">
-        <span>Explore Domain</span>
+      <div className="pt-6 mt-6 border-t border-border-subtle/60 flex items-center justify-between text-xs font-semibold text-gold-primary tracking-wide">
+        <span>Explore Practice Details</span>
         <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
       </div>
     </Card>
