@@ -28,6 +28,63 @@ export interface ProfileData {
   educations?: EducationItem[];
   timeline?: CareerTimelineItem[];
   memberships?: ProfessionalMembershipItem[];
+  about_settings?: AboutPageSettings;
+}
+
+export interface AboutHeroSettings {
+  eyebrow_badge?: Localized;
+  heading?: Localized;
+  primary_cta_text?: Localized;
+  primary_cta_url?: string;
+  secondary_cta_text?: Localized;
+  secondary_cta_url?: string;
+  portrait_badge_text?: Localized;
+}
+
+export interface AboutSectionHeader {
+  eyebrow?: Localized;
+  title?: Localized;
+  description?: Localized;
+}
+
+export interface AboutHighlightItem {
+  id: string;
+  title: Localized;
+  description: Localized;
+}
+
+export interface AboutCommitmentItem {
+  id: string;
+  pillar: Localized;
+  title: Localized;
+  description: Localized;
+  icon: string;
+}
+
+export interface AboutTrainingItem {
+  id: string;
+  year?: string;
+  duration?: Localized;
+  title: Localized;
+  institution: Localized;
+  description?: Localized;
+}
+
+export interface AboutCtaSettings {
+  chamber_label_supreme_court?: Localized;
+  chamber_label_office?: Localized;
+  button_label?: Localized;
+  button_url?: string;
+  disclaimer?: Localized;
+}
+
+export interface AboutPageSettings {
+  about_hero?: AboutHeroSettings;
+  about_section_headers?: Record<string, AboutSectionHeader>;
+  about_highlights?: AboutHighlightItem[];
+  about_commitments?: AboutCommitmentItem[];
+  about_trainings?: AboutTrainingItem[];
+  about_cta?: AboutCtaSettings;
 }
 
 export type CredentialCategory = 'academic' | 'professional' | 'court' | 'certification';

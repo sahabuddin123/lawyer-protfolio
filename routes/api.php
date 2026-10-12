@@ -21,6 +21,8 @@ use App\Http\Controllers\Api\V1\Public\ProfileController;
 use App\Http\Controllers\Api\V1\Public\RobotsController;
 use App\Http\Controllers\Api\V1\Public\SettingsController;
 use App\Http\Controllers\Api\V1\Public\SitemapController;
+use App\Http\Controllers\Api\V1\Admin\AdminFooterBuilderController;
+use App\Http\Controllers\Api\V1\Public\PublicFooterController;
 use App\Http\Controllers\Api\V1\Admin\AdminPracticeAreaController;
 use App\Http\Controllers\Api\V1\Public\PracticeAreaController as PublicPracticeAreaController;
 use App\Http\Controllers\Api\V1\Admin\AdminCourtroomController;
@@ -81,6 +83,7 @@ Route::middleware(['throttle:api'])->group(function () {
     Route::get('/navigation', [NavigationController::class, 'index']);
     Route::get('/pages/{slug}', [PageController::class, 'show']);
     Route::get('/home', [HomeController::class, 'index']);
+    Route::get('/footer', [PublicFooterController::class, 'show']);
 
     // Technical SEO
     Route::get('/sitemap', [SitemapController::class, 'jsonSummary']);
@@ -207,6 +210,20 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'throttle:api'])->group(func
         Route::put('/sections/{homepageSection}', [AdminHomepageController::class, 'update']);
         Route::delete('/sections/{homepageSection}', [AdminHomepageController::class, 'destroy']);
         Route::post('/sections/reorder', [AdminHomepageController::class, 'reorder']);
+    });
+
+    // Dynamic Footer Builder Module
+    Route::prefix('footer-builder')->middleware('permission:manage_settings|manage_homepage')->group(function () {
+        Route::get('/templates', [AdminFooterBuilderController::class, 'index']);
+        Route::post('/templates', [AdminFooterBuilderController::class, 'store']);
+        Route::get('/templates/{id}', [AdminFooterBuilderController::class, 'show']);
+        Route::put('/templates/{id}', [AdminFooterBuilderController::class, 'update']);
+        Route::delete('/templates/{id}', [AdminFooterBuilderController::class, 'destroy']);
+        Route::post('/templates/{id}/publish', [AdminFooterBuilderController::class, 'publish']);
+        Route::post('/templates/{id}/duplicate', [AdminFooterBuilderController::class, 'duplicate']);
+        Route::get('/templates/{id}/revisions', [AdminFooterBuilderController::class, 'revisions']);
+        Route::post('/templates/{id}/revisions/{revisionId}/restore', [AdminFooterBuilderController::class, 'restoreRevision']);
+        Route::get('/canonical-data', [AdminFooterBuilderController::class, 'canonicalData']);
     });
 
     Route::apiResource('redirects', AdminRedirectController::class)->middleware('permission:manage_redirects');

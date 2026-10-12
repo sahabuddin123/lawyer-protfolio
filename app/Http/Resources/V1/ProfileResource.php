@@ -39,6 +39,14 @@ class ProfileResource extends BaseApiResource
             'educations' => $this->whenLoaded('educations', fn () => EducationResource::collection($this->educations)),
             'timeline' => $this->whenLoaded('timeline', fn () => CareerTimelineResource::collection($this->timeline)),
             'memberships' => $this->whenLoaded('memberships', fn () => ProfessionalMembershipResource::collection($this->memberships)),
+            'about_settings' => $this->when(true, function () use ($isAdmin, $request) {
+                $settings = \App\Models\SiteSetting::where('group', 'about')->where('is_public', true)->get();
+                $data = [];
+                foreach ($settings as $s) {
+                    $data[$s->key] = $isAdmin ? $s->value : (new \App\Http\Resources\V1\SiteSettingResource($s))->toArray($request)['value'];
+                }
+                return $data;
+            }),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

@@ -58,6 +58,10 @@ class AdminProfileController extends Controller
         $seoData = $validated['seo'] ?? null;
         unset($validated['seo']);
 
+        // Separate about_settings payload
+        $aboutSettings = $validated['about_settings'] ?? null;
+        unset($validated['about_settings']);
+
         $profile->fill($validated);
         $profile->save();
 
@@ -73,6 +77,17 @@ class AdminProfileController extends Controller
                 ],
                 $seoData
             );
+        }
+
+        // Save dynamic about page settings
+        if (is_array($aboutSettings)) {
+            foreach ($aboutSettings as $k => $val) {
+                \App\Models\SiteSetting::updateOrCreate(
+                    ['key' => $k, 'group' => 'about'],
+                    ['value' => is_array($val) ? $val : ['value' => $val], 'is_public' => true]
+                );
+            }
+            CmsCacheService::forgetSettings();
         }
 
         // Cache purge

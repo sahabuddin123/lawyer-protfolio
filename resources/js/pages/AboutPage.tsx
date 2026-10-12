@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from '@/i18n';
 import { profileApi } from '@/api/profile';
-import { ProfileData } from '@/types/profile';
+import { practiceAreaApi } from '@/api/practiceAreas';
+import { ProfileData, AboutHighlightItem } from '@/types/profile';
+import { PracticeArea } from '@/types/practiceArea';
 import { Localized } from '@/types';
 import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
@@ -28,7 +30,7 @@ import {
 import { Link } from 'react-router-dom';
 import { SeoHead } from '@/components/seo/SeoHead';
 
-interface PracticeCategory {
+interface FallbackPracticeCategory {
   id: string;
   title: { en: string; bn: string };
   scope: { en: string; bn: string };
@@ -40,17 +42,30 @@ interface PracticeCategory {
 export const AboutPage: React.FC = () => {
   const { locale } = useTranslation();
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [practiceAreas, setPracticeAreas] = useState<PracticeArea[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await profileApi.getProfile();
-        if (isMounted && res.success) {
-          setProfile(res.data);
+        const [profileRes, practiceRes] = await Promise.allSettled([
+          profileApi.getProfile(),
+          practiceAreaApi.getPracticeAreas({ per_page: 12 }),
+        ]);
+
+        if (!isMounted) return;
+
+        if (profileRes.status === 'fulfilled' && profileRes.value.success) {
+          setProfile(profileRes.value.data);
+        } else if (profileRes.status === 'rejected') {
+          setError(profileRes.reason instanceof Error ? profileRes.reason.message : 'Failed to load profile.');
+        }
+
+        if (practiceRes.status === 'fulfilled' && practiceRes.value.success) {
+          setPracticeAreas(practiceRes.value.data || []);
         }
       } catch (err: unknown) {
         if (isMounted) {
@@ -61,7 +76,7 @@ export const AboutPage: React.FC = () => {
       }
     };
 
-    fetchProfile();
+    fetchData();
     return () => {
       isMounted = false;
     };
@@ -75,8 +90,50 @@ export const AboutPage: React.FC = () => {
     return String(field);
   };
 
-  // 7 Practice Area Categories mapped to existing site practice area routes
-  const practiceCategories: PracticeCategory[] = [
+  const getIconComponent = (name?: string, fallback: React.ComponentType<{ className?: string }> = Scale) => {
+    switch (name) {
+      case 'Scale':
+      case 'scale':
+        return Scale;
+      case 'ShieldCheck':
+      case 'shield-check':
+      case 'shield':
+        return ShieldCheck;
+      case 'Compass':
+      case 'compass':
+        return Compass;
+      case 'Clock':
+      case 'clock':
+        return Clock;
+      case 'Lock':
+      case 'lock':
+        return Lock;
+      case 'Award':
+      case 'award':
+        return Award;
+      case 'GraduationCap':
+      case 'graduation-cap':
+        return GraduationCap;
+      case 'Briefcase':
+      case 'briefcase':
+        return Briefcase;
+      case 'Building2':
+      case 'building':
+      case 'building-2':
+        return Building2;
+      case 'Landmark':
+      case 'landmark':
+        return Landmark;
+      case 'Users':
+      case 'users':
+        return Users;
+      default:
+        return fallback;
+    }
+  };
+
+  // Fallback Practice Area Categories if database practice areas are not loaded
+  const fallbackPracticeCategories: FallbackPracticeCategory[] = [
     {
       id: 'civil-litigation',
       title: {
@@ -198,8 +255,8 @@ export const AboutPage: React.FC = () => {
     },
   ];
 
-  // 4 Core Commitments from CV: Accessibility, availability, confidentiality, and integrity.
-  const commitments = [
+  // Default Commitments Fallback
+  const defaultCommitments = [
     {
       id: 'accessibility',
       pillar: { en: 'Accessibility', bn: 'সহজলভ্যতা' },
@@ -208,7 +265,7 @@ export const AboutPage: React.FC = () => {
         en: 'Straightforward orientation on statutory procedures and practical options without confusing jargon, ensuring every litigant understands the realistic trajectory of their matter.',
         bn: 'জটিল আইনি পরিভাষা পরিহার করে সেবাগ্রহীতাকে তাঁর আইনি অধিকার, আদালতের সম্ভাব্য কার্যপ্রণালী এবং বাস্তবসম্মত পদক্ষেপসমূহ স্পষ্টভাবে অবহিত করা।',
       },
-      icon: Compass,
+      icon: 'Compass',
     },
     {
       id: 'availability',
@@ -218,7 +275,7 @@ export const AboutPage: React.FC = () => {
         en: 'Conscientious scheduling and steady case tracking. Diligent preparation of court pleadings ahead of critical procedural deadlines and scheduled hearing dates.',
         bn: 'নিয়মানুবর্তিতা ও সময়োপযোগী আইনি পদক্ষেপ। আদালতের ধার্য তারিখে মামলার নথিপত্র যথাযথভাবে প্রস্তুত রাখা এবং শুনানির পূর্বে পর্যাপ্ত প্রস্তুতি নিশ্চিতকরণ।',
       },
-      icon: Clock,
+      icon: 'Clock',
     },
     {
       id: 'confidentiality',
@@ -228,7 +285,7 @@ export const AboutPage: React.FC = () => {
         en: 'Strict protection of client disclosures, property title deeds, commercial records, and strategic deliberations in full compliance with legal professional ethics.',
         bn: 'মক্কেলের ব্যক্তিগত তথ্য, আর্থিক বিবরণী, ভূমির মূল দলিলপত্র এবং মামলার কৌশলগত আলোচনার সর্বোচ্চ গোপনীয়তা ও পেশাগত বিশ্বস্ততা রক্ষা।',
       },
-      icon: Lock,
+      icon: 'Lock',
     },
     {
       id: 'integrity',
@@ -238,12 +295,48 @@ export const AboutPage: React.FC = () => {
         en: 'Fidelity to truth, accurate factual marshalling in court documents, and objective assessments without exaggerated assurances or misleading promises.',
         bn: 'আইনি নীতিশাস্ত্রের কঠোর অনুসরণ, আরজি ও জবাবে নির্ভুল তথ্য উপস্থাপন এবং কোনো অতিরঞ্জিত আশ্বাস না দিয়ে সততা ও আইনের শাসনের প্রতি অবিচল থাকা।',
       },
-      icon: ShieldCheck,
+      icon: 'ShieldCheck',
     },
   ];
 
-  // 5 Verified Professional Development & Training Items from CV
-  const verifiedCvTrainings = [
+  // Default Professional Highlights Fallback
+  const defaultHighlights: AboutHighlightItem[] = [
+    {
+      id: 'hl-1',
+      title: { en: 'University of Chittagong:', bn: 'চট্টগ্রাম বিশ্ববিদ্যালয়:' },
+      description: {
+        en: 'First Class honors in both LL.B. (Honours, 2011) and LL.M. (2012).',
+        bn: 'এলএল.বি. (অনার্স) ও এলএল.এম. উভয় ডিগ্রিতে প্রথম শ্রেণি।',
+      },
+    },
+    {
+      id: 'hl-2',
+      title: { en: 'Bar Council Enrollment:', bn: 'বার কাউন্সিল তালিকাভুক্তি:' },
+      description: {
+        en: 'Statutory qualification and enrollment as an Advocate in 2016.',
+        bn: '২০১৬ সালে সংবিধিবদ্ধ অ্যাডভোকেটশিপ পরীক্ষায় উত্তীর্ণ।',
+      },
+    },
+    {
+      id: 'hl-3',
+      title: { en: 'Litigation & Deeds Vetting:', bn: 'আইনি দলিল ও আরজি খসড়া:' },
+      description: {
+        en: 'Comprehensive plaint drafting, land title vetting, and commercial contracts.',
+        bn: 'দেওয়ানি ও ফৌজদারি মামলা, ভূমির স্বত্ব দলিল যাচাই ও বাণিজ্যিক চুক্তি।',
+      },
+    },
+    {
+      id: 'hl-4',
+      title: { en: 'ADR & Access to Justice:', bn: 'আইনি সহায়তা ও এডিআর:' },
+      description: {
+        en: 'Institutional ADR, community legal awareness, and PIL coordination.',
+        bn: 'ব্লাস্ট-এর মাধ্যমে মধ্যস্থতা, সচেতনতা ও জনস্বার্থ আইনি কার্যক্রম।',
+      },
+    },
+  ];
+
+  // Default Training Records Fallback
+  const defaultVerifiedCvTrainings = [
     {
       id: 'tr-1',
       year: '2016',
@@ -363,12 +456,106 @@ export const AboutPage: React.FC = () => {
     );
   }
 
+  const aboutSettings = profile.about_settings;
+  const sectionHeaders = aboutSettings?.about_section_headers || {};
+  const heroSettings = aboutSettings?.about_hero;
+  const ctaSettings = aboutSettings?.about_cta;
+
   const credentials = profile.credentials || [];
   const educations = profile.educations || [];
   const timeline = profile.timeline || [];
   const memberships = profile.memberships || [];
-  const trainingCredentials = credentials.filter((c) => c.category === 'certification');
-  const displayTrainings = trainingCredentials.length > 0 ? trainingCredentials : verifiedCvTrainings;
+
+  // Training items: admin about_trainings, then certification credentials, then verified CV defaults
+  const customTrainings = aboutSettings?.about_trainings && aboutSettings.about_trainings.length > 0
+    ? aboutSettings.about_trainings
+    : null;
+  const credentialTrainings = credentials.filter((c) => c.category === 'certification');
+  const displayTrainings = customTrainings || (credentialTrainings.length > 0 ? credentialTrainings : defaultVerifiedCvTrainings);
+
+  // Commitments (4 Pillars): admin about_commitments, else defaults
+  const displayCommitments = aboutSettings?.about_commitments && aboutSettings.about_commitments.length > 0
+    ? aboutSettings.about_commitments
+    : defaultCommitments;
+
+  // Highlights: admin about_highlights, else defaults
+  const displayHighlights = aboutSettings?.about_highlights && aboutSettings.about_highlights.length > 0
+    ? aboutSettings.about_highlights
+    : defaultHighlights;
+
+  // Section Headers helper
+  const getHeader = (key: string, defaults: { eyebrow: { en: string; bn: string }; title: { en: string; bn: string }; description?: { en: string; bn: string } }) => {
+    const custom = sectionHeaders[key];
+    return {
+      eyebrow: resolveText(custom?.eyebrow) || defaults.eyebrow[locale],
+      title: resolveText(custom?.title) || defaults.title[locale],
+      description: resolveText(custom?.description) || (defaults.description ? defaults.description[locale] : ''),
+    };
+  };
+
+  const bioHeader = getHeader('bio', {
+    eyebrow: { en: 'Professional Profile', bn: 'পেশাগত পরিচিতি' },
+    title: { en: 'Academic Pedigree, Advocacy Experience & Ethical Practice', bn: 'আইনি সাধনা, পেশাগত অভিজ্ঞতা ও নীতিবান কর্মপদ্ধতি' },
+  });
+
+  const timelineHeader = getHeader('timeline', {
+    eyebrow: { en: 'Career Milestones', bn: 'পেশাগত সময়রেখা' },
+    title: { en: 'Career Journey & Professional Milestones', bn: 'আইন অঙ্গনে পদচিহ্ন ও পেশাগত পথচলা' },
+    description: {
+      en: 'Chronological progression across university legal education, statutory Bar Council enrollment, corporate documentation, and litigation advocacy.',
+      bn: 'বিশ্ববিদ্যালয়ের উচ্চতর আইন শিক্ষা, সংবিধিবদ্ধ বার কাউন্সিল তালিকাভুক্তি, করপোরেট প্র্যাকটিস ও আদালত অঙ্গনে অভিজ্ঞতার ধারাবাহিক রূপরেখা।',
+    },
+  });
+
+  const practiceHeader = getHeader('practice_areas', {
+    eyebrow: { en: 'Areas of Legal Practice', bn: 'আইনি অনুশীলনের ক্ষেত্রসমূহ' },
+    title: { en: 'Categorized Legal Practice Disciplines', bn: 'সিভিতে বর্ণিত অভিজ্ঞতার বিষয়ভিত্তিক আইনি ক্ষেত্র' },
+    description: {
+      en: 'A structured overview of legal experience documented in the CV across litigation, real property vetting, commercial contracts, and dispute resolution.',
+      bn: 'দেওয়ানি ও ফৌজদারি মামলা, ভূমির স্বত্ব যাচাই ও দলিলপত্র, ব্যাংকিং বিরোধ, করপোরেট চুক্তি এবং বিকল্প বিরোধ নিষ্পত্তির সমন্বিত রূপরেখা।',
+    },
+  });
+
+  const educationHeader = getHeader('education', {
+    eyebrow: { en: 'Academic Pedigree & Qualifications', bn: 'আইন শিক্ষাগত যোগ্যতা' },
+    title: { en: 'Formal Legal Degrees & Academic Standing', bn: 'প্রাতিষ্ঠানিক আইন ডিগ্রি ও ফলাফল' },
+    description: {
+      en: 'Degrees and academic distinctions conferred by the University of Chittagong and statutory boards as documented in the CV.',
+      bn: 'চট্টগ্রাম বিশ্ববিদ্যালয় ও সংবিধিবদ্ধ বোর্ডের ফলাফল ও সনদ।',
+    },
+  });
+
+  const trainingHeader = getHeader('trainings', {
+    eyebrow: { en: 'Professional Development & Training', bn: 'পেশাগত উন্নয়ন ও প্রশিক্ষণ' },
+    title: { en: 'Workshops, Moot Court & Specialized Inquiries', bn: 'আইনি কর্মশালা, মুট কোর্ট এবং মাঠপর্যায়ের গবেষণা' },
+    description: {
+      en: 'Participation in legal advocacy workshops, international humanitarian mooting, and field research documented in the CV.',
+      bn: 'বার অ্যাসোসিয়েশন, মানবাধিকার সংস্থা ও ঢাকা বিশ্ববিদ্যালয় আইন অনুষদ আয়োজিত প্রশিক্ষণ ও গবেষণার বিবরণ।',
+    },
+  });
+
+  const commitmentHeader = getHeader('commitments', {
+    eyebrow: { en: 'Professional Commitment', bn: 'আইনি অনুশীলনের চার স্তম্ভ' },
+    title: { en: 'Accessibility, Availability, Confidentiality & Integrity', bn: 'সহজলভ্যতা, সময়ানুবর্তিতা, গোপনীয়তা ও সততা' },
+    description: {
+      en: "The four non-negotiable professional principles explicitly declared in the lawyer's CV guiding all client engagements.",
+      bn: 'আইনজীবীর সিভিতে সুস্পষ্টভাবে ঘোষিত চার মূলনীতি, যা প্রতিটি মক্কেল ও বিচারিক বিষয়ে নিষ্ঠার সাথে অনুশীলিত হয়।',
+    },
+  });
+
+  const membershipHeader = getHeader('memberships', {
+    eyebrow: { en: 'Bar & Chamber Affiliations', bn: 'বার ও চেম্বার অন্তর্ভুক্তি' },
+    title: { en: 'Professional Bar Memberships', bn: 'পেশাগত বার অ্যাসোসিয়েশন সদস্যপদ' },
+  });
+
+  const ctaHeader = getHeader('consultation_cta', {
+    eyebrow: { en: 'Chamber Consultation', bn: 'চেম্বার ও কার্যালয়' },
+    title: { en: 'Discuss Your Legal Matter', bn: 'আপনার আইনি বিষয়ে পরামর্শ গ্রহণ করুন' },
+    description: {
+      en: 'Share a brief description of your legal concern to request a consultation. The appropriate next steps depend on the facts, available documents, and applicable law.',
+      bn: 'আপনার আইনি সমস্যা ও প্রাসঙ্গিক নথিপত্র জানিয়ে পরামর্শের জন্য যোগাযোগ করুন। প্রতিটি বিষয়ের পরবর্তী পদক্ষেপ সুনির্দিষ্ট ঘটনা, প্রাপ্ত প্রমাণাদি এবং প্রচলিত আইনের ওপর নির্ভর করে।',
+    },
+  });
 
   return (
     <div className="min-h-screen bg-legal-midnight text-legal-slate-200">
@@ -410,20 +597,31 @@ export const AboutPage: React.FC = () => {
             {/* Left Column: Authority, Hero Heading & Copy */}
             <div className="lg:col-span-7">
               {/* Eyebrows & Authoritative Badges */}
-              <div className="flex flex-wrap items-center gap-3">
-                <Badge variant="gold" size="md">
-                  <Scale className="mr-1.5 h-3.5 w-3.5" />
+              <div className="flex flex-wrap items-center gap-2.5">
+                <Badge
+                  variant="gold"
+                  size="md"
+                  icon={<Scale className="h-3.5 w-3.5 shrink-0" />}
+                >
                   {resolveText(profile.title)}
                 </Badge>
                 {profile.bar_council_enrollment && (
-                  <Badge variant="outline" size="md">
-                    <ShieldCheck className="mr-1.5 h-3.5 w-3.5 text-legal-gold-400" />
+                  <Badge
+                    variant="outline"
+                    size="md"
+                    icon={<ShieldCheck className="h-3.5 w-3.5 text-legal-gold-400 shrink-0" />}
+                  >
                     {profile.bar_council_enrollment}
                   </Badge>
                 )}
-                <Badge variant="outline" size="md" className="hidden sm:inline-flex">
-                  <GraduationCap className="mr-1.5 h-3.5 w-3.5 text-legal-gold-400" />
-                  {locale === 'bn' ? 'এলএল.বি. (অনার্স) ও এলএল.এম. (প্রথম শ্রেণি)' : 'LL.B. (Hons) & LL.M. (First Class)'}
+                <Badge
+                  variant="outline"
+                  size="md"
+                  className="hidden sm:inline-flex"
+                  icon={<GraduationCap className="h-3.5 w-3.5 text-legal-gold-400 shrink-0" />}
+                >
+                  {resolveText(heroSettings?.eyebrow_badge) ||
+                    (locale === 'bn' ? 'এলএল.বি. (অনার্স) ও এলএল.এম. (প্রথম শ্রেণি)' : 'LL.B. (Hons) & LL.M. (First Class)')}
                 </Badge>
               </div>
 
@@ -441,9 +639,10 @@ export const AboutPage: React.FC = () => {
 
               {/* Hero Stated Heading */}
               <h2 className="mt-6 font-serif text-2xl font-semibold text-legal-slate-100 sm:text-3xl">
-                {locale === 'bn'
-                  ? 'আইন ও ন্যায়ের শাসন প্রতিষ্ঠায় নীতিবান ও দায়বদ্ধ আইনি সেবা'
-                  : 'Committed to Principled Legal Practice and Access to Justice'}
+                {resolveText(heroSettings?.heading) ||
+                  (locale === 'bn'
+                    ? 'আইন ও ন্যায়ের শাসন প্রতিষ্ঠায় নীতিবান ও দায়বদ্ধ আইনি সেবা'
+                    : 'Committed to Principled Legal Practice and Access to Justice')}
               </h2>
 
               {/* Stated Supporting Copy */}
@@ -454,18 +653,20 @@ export const AboutPage: React.FC = () => {
               {/* Action Buttons */}
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <Link
-                  to="/contact"
+                  to={heroSettings?.primary_cta_url || '/contact'}
                   className="inline-flex items-center rounded bg-legal-gold-500 px-6 py-3 font-sans text-sm font-semibold tracking-wide text-legal-midnight transition hover:bg-legal-gold-400 focus:outline-none focus:ring-2 focus:ring-legal-gold-500 focus:ring-offset-2 focus:ring-offset-legal-midnight"
                 >
-                  {locale === 'bn' ? 'পরামর্শের জন্য যোগাযোগ' : 'Request a Consultation'}
+                  {resolveText(heroSettings?.primary_cta_text) ||
+                    (locale === 'bn' ? 'পরামর্শের জন্য যোগাযোগ' : 'Request a Consultation')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
                 <a
-                  href="#practice-areas"
+                  href={heroSettings?.secondary_cta_url || '#practice-areas'}
                   className="inline-flex items-center rounded border border-legal-slate-700 bg-legal-slate-900/60 px-5 py-3 font-sans text-sm font-medium text-legal-slate-200 transition hover:border-legal-gold-500/60 hover:text-white"
                 >
                   <Scale className="mr-2 h-4 w-4 text-legal-gold-400" />
-                  {locale === 'bn' ? 'আইনি অনুশীলনের ক্ষেত্রসমূহ' : 'Explore Practice Areas'}
+                  {resolveText(heroSettings?.secondary_cta_text) ||
+                    (locale === 'bn' ? 'আইনি অনুশীলনের ক্ষেত্রসমূহ' : 'Explore Practice Areas')}
                 </a>
               </div>
 
@@ -522,9 +723,10 @@ export const AboutPage: React.FC = () => {
                     <div className="flex items-center justify-center space-x-2 text-xs font-medium text-legal-gold-400">
                       <ShieldCheck className="h-4 w-4" />
                       <span>
-                        {locale === 'bn'
-                          ? 'বাংলাদেশ বার কাউন্সিল প্রত্যয়িত আইনজীবী (২০১৬)'
-                          : 'Certified Practitioner — Bangladesh Bar Council (2016)'}
+                        {resolveText(heroSettings?.portrait_badge_text) ||
+                          (locale === 'bn'
+                            ? 'বাংলাদেশ বার কাউন্সিল প্রত্যয়িত আইনজীবী (২০১৬)'
+                            : 'Certified Practitioner — Bangladesh Bar Council (2016)')}
                       </span>
                     </div>
                   </div>
@@ -543,12 +745,10 @@ export const AboutPage: React.FC = () => {
             <div className="lg:col-span-7">
               <div className="flex items-center space-x-2 text-xs font-semibold tracking-wider text-legal-gold-400 uppercase">
                 <BookOpen className="h-4 w-4" />
-                <span>{locale === 'bn' ? 'পেশাগত পরিচিতি' : 'Professional Profile'}</span>
+                <span>{bioHeader.eyebrow}</span>
               </div>
               <h2 className="mt-3 font-serif text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                {locale === 'bn'
-                  ? 'আইনি সাধনা, পেশাগত অভিজ্ঞতা ও নীতিবান কর্মপদ্ধতি'
-                  : 'Academic Pedigree, Advocacy Experience & Ethical Practice'}
+                {bioHeader.title}
               </h2>
 
               <div
@@ -597,50 +797,17 @@ export const AboutPage: React.FC = () => {
                   {locale === 'bn' ? 'পেশাগত যোগ্যতার বিশেষ দিক' : 'Professional Highlights'}
                 </h4>
                 <ul className="mt-4 space-y-3 text-sm text-legal-slate-300">
-                  <li className="flex items-start">
-                    <CheckCircle2 className="mr-2.5 h-4 w-4 shrink-0 text-legal-gold-400 mt-0.5" />
-                    <span>
-                      <strong className="text-white">
-                        {locale === 'bn' ? 'চট্টগ্রাম বিশ্ববিদ্যালয়:' : 'University of Chittagong:'}
-                      </strong>{' '}
-                      {locale === 'bn'
-                        ? 'এলএল.বি. (অনার্স) ও এলএল.এম. উভয় ডিগ্রিতে প্রথম শ্রেণি।'
-                        : 'First Class honors in both LL.B. (Honours, 2011) and LL.M. (2012).'}
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle2 className="mr-2.5 h-4 w-4 shrink-0 text-legal-gold-400 mt-0.5" />
-                    <span>
-                      <strong className="text-white">
-                        {locale === 'bn' ? 'বার কাউন্সিল তালিকাভুক্তি:' : 'Bar Council Enrollment:'}
-                      </strong>{' '}
-                      {locale === 'bn'
-                        ? '২০১৬ সালে সংবিধিবদ্ধ অ্যাডভোকেটশিপ পরীক্ষায় উত্তীর্ণ।'
-                        : 'Statutory qualification and enrollment as an Advocate in 2016.'}
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle2 className="mr-2.5 h-4 w-4 shrink-0 text-legal-gold-400 mt-0.5" />
-                    <span>
-                      <strong className="text-white">
-                        {locale === 'bn' ? 'আইনি দলিল ও আরজি খসড়া:' : 'Litigation & Deeds Vetting:'}
-                      </strong>{' '}
-                      {locale === 'bn'
-                        ? 'দেওয়ানি ও ফৌজদারি মামলা, ভূমির স্বত্ব দলিল যাচাই ও বাণিজ্যিক চুক্তি।'
-                        : 'Comprehensive plaint drafting, land title vetting, and commercial contracts.'}
-                    </span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle2 className="mr-2.5 h-4 w-4 shrink-0 text-legal-gold-400 mt-0.5" />
-                    <span>
-                      <strong className="text-white">
-                        {locale === 'bn' ? 'আইনি সহায়তা ও এডিআর:' : 'ADR & Access to Justice:'}
-                      </strong>{' '}
-                      {locale === 'bn'
-                        ? 'ব্লাস্ট-এর মাধ্যমে মধ্যস্থতা, সচেতনতা ও জনস্বার্থ আইনি কার্যক্রম।'
-                        : 'Institutional ADR, community legal awareness, and PIL coordination.'}
-                    </span>
-                  </li>
+                  {displayHighlights.map((hl, index) => (
+                    <li key={hl.id || index} className="flex items-start">
+                      <CheckCircle2 className="mr-2.5 h-4 w-4 shrink-0 text-legal-gold-400 mt-0.5" />
+                      <span>
+                        <strong className="text-white">
+                          {resolveText(hl.title)}{' '}
+                        </strong>
+                        {resolveText(hl.description)}
+                      </span>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
@@ -655,16 +822,16 @@ export const AboutPage: React.FC = () => {
             <div className="text-center">
               <div className="inline-flex items-center space-x-2 text-xs font-semibold tracking-wider text-legal-gold-400 uppercase">
                 <Briefcase className="h-4 w-4" />
-                <span>{locale === 'bn' ? 'পেশাগত সময়রেখা' : 'Career Milestones'}</span>
+                <span>{timelineHeader.eyebrow}</span>
               </div>
               <h2 className="mt-2 font-serif text-3xl font-bold text-white sm:text-4xl">
-                {locale === 'bn' ? 'আইন অঙ্গনে পদচিহ্ন ও পেশাগত পথচলা' : 'Career Journey & Professional Milestones'}
+                {timelineHeader.title}
               </h2>
-              <p className="mx-auto mt-3 max-w-2xl text-sm text-legal-slate-400">
-                {locale === 'bn'
-                  ? 'বিশ্ববিদ্যালয়ের উচ্চতর আইন শিক্ষা, সংবিধিবদ্ধ বার কাউন্সিল তালিকাভুক্তি, করপোরেট প্র্যাকটিস ও আদালত অঙ্গনে অভিজ্ঞতার ধারাবাহিক রূপরেখা।'
-                  : 'Chronological progression across university legal education, statutory Bar Council enrollment, corporate documentation, and litigation advocacy.'}
-              </p>
+              {timelineHeader.description && (
+                <p className="mx-auto mt-3 max-w-2xl text-sm text-legal-slate-400">
+                  {timelineHeader.description}
+                </p>
+              )}
             </div>
 
             <div className="mx-auto mt-12 max-w-3xl space-y-6">
@@ -708,66 +875,118 @@ export const AboutPage: React.FC = () => {
           <div className="text-center">
             <div className="inline-flex items-center space-x-2 text-xs font-semibold tracking-wider text-legal-gold-400 uppercase">
               <Scale className="h-4 w-4" />
-              <span>{locale === 'bn' ? 'আইনি অনুশীলনের ক্ষেত্রসমূহ' : 'Areas of Legal Practice'}</span>
+              <span>{practiceHeader.eyebrow}</span>
             </div>
             <h2 className="mt-2 font-serif text-3xl font-bold text-white sm:text-4xl">
-              {locale === 'bn'
-                ? 'সিভিতে বর্ণিত অভিজ্ঞতার বিষয়ভিত্তিক আইনি ক্ষেত্র'
-                : 'Categorized Legal Practice Disciplines'}
+              {practiceHeader.title}
             </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-sm text-legal-slate-400">
-              {locale === 'bn'
-                ? 'দেওয়ানি ও ফৌজদারি মামলা, ভূমির স্বত্ব যাচাই ও দলিলপত্র, ব্যাংকিং বিরোধ, করপোরেট চুক্তি এবং বিকল্প বিরোধ নিষ্পত্তির সমন্বিত রূপরেখা।'
-                : 'A structured overview of legal experience documented in the CV across litigation, real property vetting, commercial contracts, and dispute resolution.'}
-            </p>
+            {practiceHeader.description && (
+              <p className="mx-auto mt-3 max-w-2xl text-sm text-legal-slate-400">
+                {practiceHeader.description}
+              </p>
+            )}
           </div>
 
           <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {practiceCategories.map((category) => {
-              const IconComp = category.icon;
-              return (
-                <Card
-                  key={category.id}
-                  className="flex flex-col justify-between border-legal-slate-800/90 bg-legal-slate-900/70 p-6 transition hover:border-legal-gold-500/50"
-                >
-                  <div>
-                    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-legal-gold-500/10 text-legal-gold-400">
-                      <IconComp className="h-5 w-5" />
-                    </div>
-                    <h3 className="mt-4 font-serif text-lg font-bold text-white">
-                      {category.title[locale]}
-                    </h3>
-                    <p className="mt-2 text-xs leading-relaxed text-legal-slate-300">
-                      {category.scope[locale]}
-                    </p>
+            {practiceAreas && practiceAreas.length > 0 ? (
+              practiceAreas.map((pa) => {
+                const IconComp = getIconComponent(pa.icon_name || undefined, Scale);
+                const assistanceList = pa.areas_of_assistance && pa.areas_of_assistance.length > 0
+                  ? pa.areas_of_assistance
+                  : null;
 
-                    <div className="mt-4 border-t border-legal-slate-800/80 pt-3">
-                      <span className="text-[11px] font-semibold text-legal-gold-400 uppercase tracking-wider">
-                        {locale === 'bn' ? 'অন্তর্ভুক্ত আইনি বিষয়সমূহ:' : 'Key Subject Matters:'}
-                      </span>
-                      <ul className="mt-2 space-y-1 text-xs text-legal-slate-400">
-                        {category.subjects[locale].map((subj, idx) => (
-                          <li key={idx} className="flex items-center">
-                            <span className="mr-1.5 h-1 w-1 rounded-full bg-legal-gold-400/80" />
-                            {subj}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
+                return (
+                  <Card
+                    key={pa.id}
+                    className="flex flex-col justify-between border-legal-slate-800/90 bg-legal-slate-900/70 p-6 transition hover:border-legal-gold-500/50"
+                  >
+                    <div>
+                      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-legal-gold-500/10 text-legal-gold-400">
+                        <IconComp className="h-5 w-5" />
+                      </div>
+                      <h3 className="mt-4 font-serif text-lg font-bold text-white">
+                        {resolveText(pa.title)}
+                      </h3>
+                      <p className="mt-2 text-xs leading-relaxed text-legal-slate-300 line-clamp-3">
+                        {resolveText(pa.short_description)}
+                      </p>
 
-                  <div className="mt-6 pt-3">
-                    <Link
-                      to={category.link}
-                      className="inline-flex items-center text-xs font-semibold text-legal-gold-400 transition hover:text-legal-gold-300"
-                    >
-                      {locale === 'bn' ? 'বিস্তারিত তথ্য দেখুন' : 'Explore Practice Area Details'}
-                      <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                    </Link>
-                  </div>
-                </Card>
-              );
-            })}
+                      {assistanceList && assistanceList.length > 0 && (
+                        <div className="mt-4 border-t border-legal-slate-800/80 pt-3">
+                          <span className="text-[11px] font-semibold text-legal-gold-400 uppercase tracking-wider">
+                            {locale === 'bn' ? 'অন্তর্ভুক্ত আইনি বিষয়সমূহ:' : 'Key Subject Matters:'}
+                          </span>
+                          <ul className="mt-2 space-y-1 text-xs text-legal-slate-400">
+                            {assistanceList.slice(0, 5).map((subj, idx) => (
+                              <li key={idx} className="flex items-center">
+                                <span className="mr-1.5 h-1 w-1 rounded-full bg-legal-gold-400/80" />
+                                {resolveText(subj.title)}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-6 pt-3">
+                      <Link
+                        to={`/practice-areas/${pa.slug}`}
+                        className="inline-flex items-center text-xs font-semibold text-legal-gold-400 transition hover:text-legal-gold-300"
+                      >
+                        {locale === 'bn' ? 'বিস্তারিত তথ্য দেখুন' : 'Explore Practice Area Details'}
+                        <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                      </Link>
+                    </div>
+                  </Card>
+                );
+              })
+            ) : (
+              fallbackPracticeCategories.map((category) => {
+                const IconComp = category.icon;
+                return (
+                  <Card
+                    key={category.id}
+                    className="flex flex-col justify-between border-legal-slate-800/90 bg-legal-slate-900/70 p-6 transition hover:border-legal-gold-500/50"
+                  >
+                    <div>
+                      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-legal-gold-500/10 text-legal-gold-400">
+                        <IconComp className="h-5 w-5" />
+                      </div>
+                      <h3 className="mt-4 font-serif text-lg font-bold text-white">
+                        {category.title[locale]}
+                      </h3>
+                      <p className="mt-2 text-xs leading-relaxed text-legal-slate-300">
+                        {category.scope[locale]}
+                      </p>
+
+                      <div className="mt-4 border-t border-legal-slate-800/80 pt-3">
+                        <span className="text-[11px] font-semibold text-legal-gold-400 uppercase tracking-wider">
+                          {locale === 'bn' ? 'অন্তর্ভুক্ত আইনি বিষয়সমূহ:' : 'Key Subject Matters:'}
+                        </span>
+                        <ul className="mt-2 space-y-1 text-xs text-legal-slate-400">
+                          {category.subjects[locale].map((subj, idx) => (
+                            <li key={idx} className="flex items-center">
+                              <span className="mr-1.5 h-1 w-1 rounded-full bg-legal-gold-400/80" />
+                              {subj}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 pt-3">
+                      <Link
+                        to={category.link}
+                        className="inline-flex items-center text-xs font-semibold text-legal-gold-400 transition hover:text-legal-gold-300"
+                      >
+                        {locale === 'bn' ? 'বিস্তারিত তথ্য দেখুন' : 'Explore Practice Area Details'}
+                        <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                      </Link>
+                    </div>
+                  </Card>
+                );
+              })
+            )}
           </div>
         </Container>
       </section>
@@ -779,16 +998,16 @@ export const AboutPage: React.FC = () => {
             <div className="text-center">
               <div className="inline-flex items-center space-x-2 text-xs font-semibold tracking-wider text-legal-gold-400 uppercase">
                 <GraduationCap className="h-4 w-4" />
-                <span>{locale === 'bn' ? 'আইন শিক্ষাগত যোগ্যতা' : 'Academic Pedigree & Qualifications'}</span>
+                <span>{educationHeader.eyebrow}</span>
               </div>
               <h2 className="mt-2 font-serif text-3xl font-bold text-white sm:text-4xl">
-                {locale === 'bn' ? 'প্রাতিষ্ঠানিক আইন ডিগ্রি ও ফলাফল' : 'Formal Legal Degrees & Academic Standing'}
+                {educationHeader.title}
               </h2>
-              <p className="mx-auto mt-3 max-w-2xl text-sm text-legal-slate-400">
-                {locale === 'bn'
-                  ? 'চট্টগ্রাম বিশ্ববিদ্যালয় ও সংবিধিবদ্ধ বোর্ডের ফলাফল ও সনদ।'
-                  : 'Degrees and academic distinctions conferred by the University of Chittagong and statutory boards as documented in the CV.'}
-              </p>
+              {educationHeader.description && (
+                <p className="mx-auto mt-3 max-w-2xl text-sm text-legal-slate-400">
+                  {educationHeader.description}
+                </p>
+              )}
             </div>
 
             <div className="mx-auto mt-12 max-w-3xl space-y-6">
@@ -839,47 +1058,52 @@ export const AboutPage: React.FC = () => {
             <div className="text-center">
               <div className="inline-flex items-center space-x-2 text-xs font-semibold tracking-wider text-legal-gold-400 uppercase">
                 <Award className="h-4 w-4" />
-                <span>{locale === 'bn' ? 'পেশাগত উন্নয়ন ও প্রশিক্ষণ' : 'Professional Development & Training'}</span>
+                <span>{trainingHeader.eyebrow}</span>
               </div>
               <h2 className="mt-2 font-serif text-3xl font-bold text-white sm:text-4xl">
-                {locale === 'bn' ? 'আইনি কর্মশালা, মুট কোর্ট এবং মাঠপর্যায়ের গবেষণা' : 'Workshops, Moot Court & Specialized Inquiries'}
+                {trainingHeader.title}
               </h2>
-              <p className="mx-auto mt-3 max-w-2xl text-sm text-legal-slate-400">
-                {locale === 'bn'
-                  ? 'বার অ্যাসোসিয়েশন, মানবাধিকার সংস্থা ও ঢাকা বিশ্ববিদ্যালয় আইন অনুষদ আয়োজিত প্রশিক্ষণ ও গবেষণার বিবরণ।'
-                  : 'Participation in legal advocacy workshops, international humanitarian mooting, and field research documented in the CV.'}
-              </p>
+              {trainingHeader.description && (
+                <p className="mx-auto mt-3 max-w-2xl text-sm text-legal-slate-400">
+                  {trainingHeader.description}
+                </p>
+              )}
             </div>
 
             <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {displayTrainings.map((item) => (
-                <Card
-                  key={item.id}
-                  className="flex flex-col justify-between border-legal-slate-800/90 bg-legal-slate-900/60 p-6 transition hover:border-legal-gold-500/50"
-                >
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="rounded bg-legal-gold-500/10 px-2 py-0.5 text-[11px] font-semibold text-legal-gold-400 uppercase">
-                        {locale === 'bn' ? 'প্রশিক্ষণ / কর্মশালা' : 'Workshop & Training'}
-                      </span>
-                      {item.year && (
-                        <span className="font-mono text-xs font-medium text-legal-slate-400">{item.year}</span>
+              {displayTrainings.map((item, index) => {
+                const yearText = item.year || (typeof (item as any).issued_date === 'string' ? (item as any).issued_date : '');
+                const durationText = (item as any).duration ? resolveText((item as any).duration) : '';
+
+                return (
+                  <Card
+                    key={item.id || index}
+                    className="flex flex-col justify-between border-legal-slate-800/90 bg-legal-slate-900/60 p-6 transition hover:border-legal-gold-500/50"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="rounded bg-legal-gold-500/10 px-2 py-0.5 text-[11px] font-semibold text-legal-gold-400 uppercase">
+                          {durationText || (locale === 'bn' ? 'প্রশিক্ষণ / কর্মশালা' : 'Workshop & Training')}
+                        </span>
+                        {yearText && (
+                          <span className="font-mono text-xs font-medium text-legal-slate-400">{yearText}</span>
+                        )}
+                      </div>
+                      <h3 className="mt-4 font-serif text-base font-bold text-white">
+                        {resolveText(item.title)}
+                      </h3>
+                      <p className="mt-2 text-xs font-medium text-legal-gold-400/90">
+                        {resolveText((item as any).institution || (item as any).issuing_authority)}
+                      </p>
+                      {item.description && (
+                        <p className="mt-3 text-xs leading-relaxed text-legal-slate-300">
+                          {resolveText(item.description)}
+                        </p>
                       )}
                     </div>
-                    <h3 className="mt-4 font-serif text-base font-bold text-white">
-                      {resolveText(item.title)}
-                    </h3>
-                    <p className="mt-2 text-xs font-medium text-legal-gold-400/90">
-                      {resolveText(item.institution)}
-                    </p>
-                    {item.description && (
-                      <p className="mt-3 text-xs leading-relaxed text-legal-slate-300">
-                        {resolveText(item.description)}
-                      </p>
-                    )}
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </div>
           </Container>
         </section>
@@ -891,39 +1115,37 @@ export const AboutPage: React.FC = () => {
           <div className="text-center">
             <div className="inline-flex items-center space-x-2 text-xs font-semibold tracking-wider text-legal-gold-400 uppercase">
               <ShieldCheck className="h-4 w-4" />
-              <span>{locale === 'bn' ? 'আইনি অনুশীলনের চার স্তম্ভ' : 'Professional Commitment'}</span>
+              <span>{commitmentHeader.eyebrow}</span>
             </div>
             <h2 className="mt-2 font-serif text-3xl font-bold text-white sm:text-4xl">
-              {locale === 'bn'
-                ? 'সহজলভ্যতা, সময়ানুবর্তিতা, গোপনীয়তা ও সততা'
-                : 'Accessibility, Availability, Confidentiality & Integrity'}
+              {commitmentHeader.title}
             </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-sm text-legal-slate-400">
-              {locale === 'bn'
-                ? 'আইনজীবীর সিভিতে সুস্পষ্টভাবে ঘোষিত চার মূলনীতি, যা প্রতিটি মক্কেল ও বিচারিক বিষয়ে নিষ্ঠার সাথে অনুশীলিত হয়।'
-                : 'The four non-negotiable professional principles explicitly declared in the lawyer\'s CV guiding all client engagements.'}
-            </p>
+            {commitmentHeader.description && (
+              <p className="mx-auto mt-3 max-w-2xl text-sm text-legal-slate-400">
+                {commitmentHeader.description}
+              </p>
+            )}
           </div>
 
           <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {commitments.map((com) => {
-              const IconComp = com.icon;
+            {displayCommitments.map((com, index) => {
+              const IconComp = getIconComponent(com.icon, Compass);
               return (
                 <div
-                  key={com.id}
+                  key={com.id || index}
                   className="rounded-xl border border-legal-slate-800 bg-legal-slate-900/80 p-6 transition hover:border-legal-gold-500/60 hover:bg-legal-slate-900"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-legal-gold-500/10 text-legal-gold-400">
                     <IconComp className="h-6 w-6" />
                   </div>
                   <span className="mt-4 block font-serif text-lg font-bold text-legal-gold-400">
-                    {com.pillar[locale]}
+                    {resolveText(com.pillar)}
                   </span>
                   <h3 className="mt-1 font-serif text-base font-semibold text-white">
-                    {com.title[locale]}
+                    {resolveText(com.title)}
                   </h3>
                   <p className="mt-2 text-xs leading-relaxed text-legal-slate-300">
-                    {com.description[locale]}
+                    {resolveText(com.description)}
                   </p>
                 </div>
               );
@@ -939,10 +1161,10 @@ export const AboutPage: React.FC = () => {
             <div className="text-center">
               <div className="inline-flex items-center space-x-2 text-xs font-semibold tracking-wider text-legal-gold-400 uppercase">
                 <Users className="h-4 w-4" />
-                <span>{locale === 'bn' ? 'বার ও চেম্বার অন্তর্ভুক্তি' : 'Bar & Chamber Affiliations'}</span>
+                <span>{membershipHeader.eyebrow}</span>
               </div>
               <h2 className="mt-2 font-serif text-3xl font-bold text-white sm:text-4xl">
-                {locale === 'bn' ? 'পেশাগত বার অ্যাসোসিয়েশন সদস্যপদ' : 'Professional Bar Memberships'}
+                {membershipHeader.title}
               </h2>
             </div>
 
@@ -981,22 +1203,23 @@ export const AboutPage: React.FC = () => {
             <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
               <div className="lg:col-span-8">
                 <span className="text-xs font-semibold tracking-wider text-legal-gold-400 uppercase">
-                  {locale === 'bn' ? 'চেম্বার ও কার্যালয়' : 'Chamber Consultation'}
+                  {ctaHeader.eyebrow}
                 </span>
                 <h3 className="mt-2 font-serif text-3xl font-bold text-white">
-                  {locale === 'bn' ? 'আপনার আইনি বিষয়ে পরামর্শ গ্রহণ করুন' : 'Discuss Your Legal Matter'}
+                  {ctaHeader.title}
                 </h3>
-                <p className="mt-3 text-sm text-legal-slate-300 max-w-2xl leading-relaxed">
-                  {locale === 'bn'
-                    ? 'আপনার আইনি সমস্যা ও প্রাসঙ্গিক নথিপত্র জানিয়ে পরামর্শের জন্য যোগাযোগ করুন। প্রতিটি বিষয়ের পরবর্তী পদক্ষেপ সুনির্দিষ্ট ঘটনা, প্রাপ্ত প্রমাণাদি এবং প্রচলিত আইনের ওপর নির্ভর করে।'
-                    : 'Share a brief description of your legal concern to request a consultation. The appropriate next steps depend on the facts, available documents, and applicable law.'}
-                </p>
+                {ctaHeader.description && (
+                  <p className="mt-3 text-sm text-legal-slate-300 max-w-2xl leading-relaxed">
+                    {ctaHeader.description}
+                  </p>
+                )}
 
                 <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <div>
                     <h4 className="flex items-center text-xs font-semibold text-legal-gold-400 uppercase">
                       <Building2 className="mr-1.5 h-4 w-4" />
-                      {locale === 'bn' ? 'সুপ্রিম কোর্ট চেম্বার' : 'Supreme Court Chambers'}
+                      {resolveText(ctaSettings?.chamber_label_supreme_court) ||
+                        (locale === 'bn' ? 'সুপ্রিম কোর্ট চেম্বার' : 'Supreme Court Chambers')}
                     </h4>
                     <p className="mt-2 text-sm text-legal-slate-300">
                       {resolveText(profile.chambers_address)}
@@ -1005,7 +1228,8 @@ export const AboutPage: React.FC = () => {
                   <div>
                     <h4 className="flex items-center text-xs font-semibold text-legal-gold-400 uppercase">
                       <Building2 className="mr-1.5 h-4 w-4" />
-                      {locale === 'bn' ? 'প্রধান কার্যালয়' : 'Principal Office'}
+                      {resolveText(ctaSettings?.chamber_label_office) ||
+                        (locale === 'bn' ? 'প্রধান কার্যালয়' : 'Principal Office')}
                     </h4>
                     <p className="mt-2 text-sm text-legal-slate-300">
                       {resolveText(profile.office_address)}
@@ -1016,11 +1240,12 @@ export const AboutPage: React.FC = () => {
 
               <div className="flex flex-col space-y-4 lg:col-span-4 lg:items-end">
                 <Link
-                  to="/contact"
+                  to={ctaSettings?.button_url || '/contact'}
                   className="inline-flex w-full items-center justify-center rounded bg-legal-gold-500 px-6 py-3 font-sans text-sm font-semibold text-legal-midnight transition hover:bg-legal-gold-400 sm:w-auto"
                 >
                   <MessageSquare className="mr-2 h-4 w-4" />
-                  {locale === 'bn' ? 'পরামর্শের অনুরোধ জানান' : 'Schedule Consultation'}
+                  {resolveText(ctaSettings?.button_label) ||
+                    (locale === 'bn' ? 'পরামর্শের অনুরোধ জানান' : 'Schedule Consultation')}
                 </Link>
                 {profile.phone && (
                   <a
@@ -1045,9 +1270,10 @@ export const AboutPage: React.FC = () => {
 
             {/* Regulatory Disclaimer Notice */}
             <div className="mt-8 border-t border-legal-slate-800/80 pt-4 text-center text-xs text-legal-slate-500">
-              {locale === 'bn'
-                ? 'আইনি সতর্কবার্তা: এই ওয়েবসাইটের মাধ্যমে প্রাথমিক যোগাযোগের অনুরোধ কোনো আইনজীবী-মক্কেল সম্পর্ক স্থাপন করে না। আনুষ্ঠানিক সাক্ষাৎ ও সম্মতির মাধ্যমেই কেবল দায়িত্ব গ্রহণ করা হয়।'
-                : 'Regulatory Notice: Submitting a consultation inquiry through this platform does not create an automatic advocate-client relationship. Formal representation commences only upon mutual consent and direct chamber engagement.'}
+              {resolveText(ctaSettings?.disclaimer) ||
+                (locale === 'bn'
+                  ? 'আইনি সতর্কবার্তা: এই ওয়েবসাইটের মাধ্যমে প্রাথমিক যোগাযোগের অনুরোধ কোনো আইনজীবী-মক্কেল সম্পর্ক স্থাপন করে না। আনুষ্ঠানিক সাক্ষাৎ ও সম্মতির মাধ্যমেই কেবল দায়িত্ব গ্রহণ করা হয়।'
+                  : 'Regulatory Notice: Submitting a consultation inquiry through this platform does not create an automatic advocate-client relationship. Formal representation commences only upon mutual consent and direct chamber engagement.')}
             </div>
           </div>
         </Container>
@@ -1055,3 +1281,5 @@ export const AboutPage: React.FC = () => {
     </div>
   );
 };
+
+export default AboutPage;

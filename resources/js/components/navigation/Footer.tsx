@@ -1,13 +1,90 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Container } from '@/components/ui/Container';
 import { GoldDivider } from '@/components/ui/Divider';
 import { useTranslation } from '@/i18n';
 import { Scale, MapPin, Phone, Mail, Award, ShieldCheck } from 'lucide-react';
+import { footerBuilderApi } from '@/features/footer-builder/api';
+import { ElementRenderer } from '@/features/footer-builder/components/ElementRenderer';
+import type { PublicFooterPayload, FooterLayoutData } from '@/features/footer-builder/types';
 
 export const Footer: React.FC = () => {
   const { t, locale } = useTranslation();
+  const [publishedFooter, setPublishedFooter] = useState<PublicFooterPayload | null>(null);
 
+  useEffect(() => {
+    let isMounted = true;
+    footerBuilderApi
+      .getPublicFooter(locale)
+      .then((data) => {
+        if (isMounted && data?.layout?.rows?.length) {
+          setPublishedFooter(data);
+        }
+      })
+      .catch(() => {
+        // Fall back gracefully to static institutional layout
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [locale]);
+
+  // If a published dynamic footer layout is present, render it dynamically
+  if (publishedFooter?.layout?.rows?.length) {
+    const layout: FooterLayoutData = publishedFooter.layout;
+
+    return (
+      <footer
+        style={{
+          backgroundColor: layout.settings.background_color || undefined,
+          borderTopColor: layout.settings.border_top_color || undefined,
+        }}
+        className="bg-background-secondary border-t border-border-subtle pt-16 pb-12 text-text-secondary text-sm transition-colors"
+      >
+        <Container>
+          <div className="space-y-8">
+            {layout.rows.map((row) => (
+              <div
+                key={row.id}
+                style={{
+                  marginBottom: row.settings.margin_bottom || undefined,
+                  gap: row.settings.gap || undefined,
+                }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-12"
+              >
+                {row.columns.map((column) => {
+                  const span = column.span || 12;
+                  const spanClass = `lg:col-span-${span}`;
+
+                  return (
+                    <div
+                      key={column.id}
+                      style={{
+                        backgroundColor: column.settings.background_color || undefined,
+                      }}
+                      className={`${spanClass} space-y-4`}
+                    >
+                      {column.elements.map((el) => (
+                        <ElementRenderer
+                          key={el.id}
+                          element={el}
+                          locale={locale}
+                          isBuilderMode={false}
+                        />
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </Container>
+      </footer>
+    );
+  }
+
+  // Graceful Fallback (Existing Canonical 4-Column Supreme Court Institutional Footer)
   const practiceAreaLinks = [
     { label: locale === 'bn' ? 'সাংবিধানিক ও রিট মামলা' : 'Constitutional & Writ Petitions', href: '/practice-areas' },
     { label: locale === 'bn' ? 'দেওয়ানি ও বাণিজ্যিক মোকদ্দমা' : 'Civil & Commercial Litigation', href: '/practice-areas' },

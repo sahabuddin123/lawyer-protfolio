@@ -19,7 +19,7 @@ export const Badge: React.FC<BadgeProps> = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center font-medium tracking-wider uppercase transition-colors select-none rounded-full';
+    'inline-flex items-center justify-center font-medium tracking-wider uppercase transition-colors select-none rounded-full whitespace-nowrap leading-none';
 
   const variantStyles: Record<BadgeVariant, string> = {
     gold: 'bg-gold-subtle border border-gold-border text-gold-primary',
@@ -29,14 +29,14 @@ export const Badge: React.FC<BadgeProps> = ({
   };
 
   const sizeStyles: Record<BadgeSize, string> = {
-    sm: 'text-[10px] px-2 py-0.5 gap-1',
-    md: 'text-xs px-2.5 py-1 gap-1.5',
+    sm: 'text-[10px] px-2.5 py-1 gap-1.5',
+    md: 'text-xs px-3 py-1.5 gap-2',
   };
 
   return (
     <span className={cn(baseStyles, variantStyles[variant], sizeStyles[size], className)} {...props}>
-      {icon && <span className="inline-flex shrink-0">{icon}</span>}
-      <span>{children}</span>
+      {icon && <span className="inline-flex shrink-0 items-center">{icon}</span>}
+      <span className="inline-flex items-center gap-1.5">{children}</span>
     </span>
   );
 };

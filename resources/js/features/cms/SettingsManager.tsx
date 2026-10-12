@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { cmsApi } from '@/api/cms';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/forms/Input';
 import { Textarea } from '@/components/forms/Textarea';
 import { useToast } from '@/components/feedback/Toast';
 import { AdminPageHeader, AdminLoadingState } from '@/components/admin';
-import { Globe, Image, Phone, Share2, Search, Save, AlertCircle, MessageSquareQuote } from 'lucide-react';
+import { Globe, Image, Phone, Share2, Search, Save, AlertCircle, MessageSquareQuote, LayoutGrid, ArrowRight } from 'lucide-react';
 import type { SiteSetting } from '@/types';
 
-type TabType = 'general' | 'branding' | 'contact' | 'social' | 'seo' | 'cta';
+type TabType = 'general' | 'branding' | 'contact' | 'social' | 'seo' | 'cta' | 'about';
 
 export const SettingsManager: React.FC = () => {
   const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const tabQuery = searchParams.get('tab') as TabType | null;
-  const validTabs: TabType[] = ['general', 'branding', 'contact', 'social', 'seo', 'cta'];
+  const validTabs: TabType[] = ['general', 'branding', 'contact', 'social', 'seo', 'cta', 'about'];
   const activeTab: TabType = tabQuery && validTabs.includes(tabQuery) ? tabQuery : 'general';
 
   const setActiveTab = (tab: TabType) => {
@@ -124,6 +124,7 @@ export const SettingsManager: React.FC = () => {
     { id: 'social', label: 'Social Profiles', icon: Share2 },
     { id: 'seo', label: 'SEO & Meta Tags', icon: Search },
     { id: 'cta', label: 'Global Call to Action', icon: MessageSquareQuote },
+    { id: 'about', label: 'About Page', icon: LayoutGrid },
   ] as const;
 
   return (
@@ -621,6 +622,50 @@ export const SettingsManager: React.FC = () => {
                   }}
                   placeholder="/contact"
                 />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'about' && (
+            <div className="bg-white p-6 rounded-lg border border-legal-slate-200 shadow-sm space-y-5">
+              <div className="flex items-center space-x-3 border-b border-legal-slate-200 pb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-legal-gold-500/10 text-legal-gold-600">
+                  <LayoutGrid className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-serif text-lg font-bold text-legal-slate-900">About Page Dynamic CMS Controls</h3>
+                  <p className="text-xs text-legal-slate-500">
+                    Comprehensive dynamic management for all 9 sections of the public About Page.
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-sm text-legal-slate-700 leading-relaxed space-y-2">
+                <p>
+                  All About Page content is managed dynamically in the unified Lawyer Profile & About CMS Suite.
+                  Both English and Bengali translations are fully editable for:
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-xs text-legal-slate-600 pl-2">
+                  <li><strong>Hero Section:</strong> Stated headline, degree badge, action buttons, and portrait certification text.</li>
+                  <li><strong>Section Headings:</strong> Custom eyebrow tags, titles, and descriptions for all 9 sections.</li>
+                  <li><strong>Professional Highlights:</strong> 4 core distinction checklist items.</li>
+                  <li><strong>Core Commitments:</strong> 4 pillars (Accessibility, Availability, Confidentiality, Integrity) with custom icons.</li>
+                  <li><strong>Professional Development:</strong> Chronological training workshops, moot competitions, and inquiries.</li>
+                  <li><strong>Chamber Locations & CTA:</strong> Consultation labels, chamber addresses, and statutory disclaimers.</li>
+                </ul>
+              </div>
+
+              <div className="pt-4 border-t border-legal-slate-200 flex items-center justify-between">
+                <span className="text-xs text-legal-slate-500">
+                  Settings are stored in the database and synchronized instantly across EN/BN locales.
+                </span>
+                <Link
+                  to="/admin/profile?tab=about_page"
+                  className="inline-flex items-center rounded-md bg-legal-gold-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-legal-gold-500 focus:outline-none focus:ring-2 focus:ring-legal-gold-500"
+                >
+                  Open About Page CMS Editor
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
               </div>
             </div>
           )}

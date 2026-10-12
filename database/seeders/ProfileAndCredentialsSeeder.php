@@ -9,6 +9,8 @@ use App\Models\Media;
 use App\Models\ProfessionalMembership;
 use App\Models\Profile;
 use App\Models\SeoMeta;
+use App\Models\SiteSetting;
+use App\Models\User;
 use App\Services\CmsCacheService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -20,6 +22,9 @@ class ProfileAndCredentialsSeeder extends Seeder
      */
     public function run(): void
     {
+        $adminUser = User::first();
+        $uploadedBy = $adminUser ? $adminUser->id : null;
+
         // 0. Ensure Lawyer Photos are Registered as Media
         $courtRobesMedia = Media::firstOrCreate(
             ['filename' => 'lawyer-court-robes.jpg'],
@@ -46,7 +51,7 @@ class ProfileAndCredentialsSeeder extends Seeder
                     'medium' => '/images/lawyer-court-robes.jpg',
                     'large' => '/images/lawyer-court-robes.jpg',
                 ],
-                'uploaded_by' => 1,
+                'uploaded_by' => $uploadedBy,
             ]
         );
 
@@ -75,7 +80,7 @@ class ProfileAndCredentialsSeeder extends Seeder
                     'medium' => '/images/lawyer-executive.jpg',
                     'large' => '/images/lawyer-executive.jpg',
                 ],
-                'uploaded_by' => 1,
+                'uploaded_by' => $uploadedBy,
             ]
         );
 
@@ -473,6 +478,294 @@ class ProfileAndCredentialsSeeder extends Seeder
         ProfessionalMembership::query()->delete();
         foreach ($memberships as $membershipData) {
             ProfessionalMembership::create($membershipData);
+        }
+
+        // 6. Dynamic About Page Settings (100% editable from Admin Panel)
+        $aboutSettings = [
+            [
+                'key' => 'about_hero',
+                'group' => 'about',
+                'is_public' => true,
+                'value' => [
+                    'eyebrow_badge' => [
+                        'en' => 'LL.B. (Hons) & LL.M. (First Class)',
+                        'bn' => 'এলএল.বি. (অনার্স) ও এলএল.এম. (প্রথম শ্রেণি)',
+                    ],
+                    'heading' => [
+                        'en' => 'Committed to Principled Legal Practice and Access to Justice',
+                        'bn' => 'আইন ও ন্যায়ের শাসন প্রতিষ্ঠায় নীতিবান ও দায়বদ্ধ আইনি সেবা',
+                    ],
+                    'primary_cta_text' => [
+                        'en' => 'Request a Consultation',
+                        'bn' => 'পরামর্শের জন্য যোগাযোগ',
+                    ],
+                    'primary_cta_url' => '/contact',
+                    'secondary_cta_text' => [
+                        'en' => 'Explore Practice Areas',
+                        'bn' => 'আইনি অনুশীলনের ক্ষেত্রসমূহ',
+                    ],
+                    'secondary_cta_url' => '#practice-areas',
+                    'portrait_badge_text' => [
+                        'en' => 'Certified Practitioner — Bangladesh Bar Council (2016)',
+                        'bn' => 'বাংলাদেশ বার কাউন্সিল প্রত্যয়িত আইনজীবী (২০১৬)',
+                    ],
+                ],
+            ],
+            [
+                'key' => 'about_section_headers',
+                'group' => 'about',
+                'is_public' => true,
+                'value' => [
+                    'bio' => [
+                        'eyebrow' => ['en' => 'Professional Profile', 'bn' => 'পেশাগত পরিচিতি'],
+                        'title' => ['en' => 'Academic Pedigree, Advocacy Experience & Ethical Practice', 'bn' => 'আইনি সাধনা, পেশাগত অভিজ্ঞতা ও নীতিবান কর্মপদ্ধতি'],
+                    ],
+                    'timeline' => [
+                        'eyebrow' => ['en' => 'Career Milestones', 'bn' => 'পেশাগত সময়রেখা'],
+                        'title' => ['en' => 'Career Journey & Professional Milestones', 'bn' => 'আইন অঙ্গনে পদচিহ্ন ও পেশাগত পথচলা'],
+                        'description' => [
+                            'en' => 'Chronological progression across university legal education, statutory Bar Council enrollment, corporate documentation, and litigation advocacy.',
+                            'bn' => 'বিশ্ববিদ্যালয়ের উচ্চতর আইন শিক্ষা, সংবিধিবদ্ধ বার কাউন্সিল তালিকাভুক্তি, করপোরেট প্র্যাকটিস ও আদালত অঙ্গনে অভিজ্ঞতার ধারাবাহিক রূপরেখা।',
+                        ],
+                    ],
+                    'practice_areas' => [
+                        'eyebrow' => ['en' => 'Areas of Legal Practice', 'bn' => 'আইনি অনুশীলনের ক্ষেত্রসমূহ'],
+                        'title' => ['en' => 'Categorized Legal Practice Disciplines', 'bn' => 'সিভিতে বর্ণিত অভিজ্ঞতার বিষয়ভিত্তিক আইনি ক্ষেত্র'],
+                        'description' => [
+                            'en' => 'A structured overview of legal experience documented in the CV across litigation, real property vetting, commercial contracts, and dispute resolution.',
+                            'bn' => 'দেওয়ানি ও ফৌজদারি মামলা, ভূমির স্বত্ব যাচাই ও দলিলপত্র, ব্যাংকিং বিরোধ, করপোরেট চুক্তি এবং বিকল্প বিরোধ নিষ্পত্তির সমন্বিত রূপরেখা।',
+                        ],
+                    ],
+                    'education' => [
+                        'eyebrow' => ['en' => 'Academic Pedigree & Qualifications', 'bn' => 'আইন শিক্ষাগত যোগ্যতা'],
+                        'title' => ['en' => 'Formal Legal Degrees & Academic Standing', 'bn' => 'প্রাতিষ্ঠানিক আইন ডিগ্রি ও ফলাফল'],
+                        'description' => [
+                            'en' => 'Degrees and academic distinctions conferred by the University of Chittagong and statutory boards as documented in the CV.',
+                            'bn' => 'চট্টগ্রাম বিশ্ববিদ্যালয় ও সংবিধিবদ্ধ বোর্ডের ফলাফল ও সনদ।',
+                        ],
+                    ],
+                    'trainings' => [
+                        'eyebrow' => ['en' => 'Professional Development & Training', 'bn' => 'পেশাগত উন্নয়ন ও প্রশিক্ষণ'],
+                        'title' => ['en' => 'Workshops, Moot Court & Specialized Inquiries', 'bn' => 'আইনি কর্মশালা, মুট কোর্ট এবং মাঠপর্যায়ের গবেষণা'],
+                        'description' => [
+                            'en' => 'Participation in legal advocacy workshops, international humanitarian mooting, and field research documented in the CV.',
+                            'bn' => 'বার অ্যাসোসিয়েশন, মানবাধিকার সংস্থা ও ঢাকা বিশ্ববিদ্যালয় আইন অনুষদ আয়োজিত প্রশিক্ষণ ও গবেষণার বিবরণ।',
+                        ],
+                    ],
+                    'commitments' => [
+                        'eyebrow' => ['en' => 'Professional Commitment', 'bn' => 'আইনি অনুশীলনের চার স্তম্ভ'],
+                        'title' => ['en' => 'Accessibility, Availability, Confidentiality & Integrity', 'bn' => 'সহজলভ্যতা, সময়ানুবর্তিতা, গোপনীয়তা ও সততা'],
+                        'description' => [
+                            'en' => "The four non-negotiable professional principles explicitly declared in the lawyer's CV guiding all client engagements.",
+                            'bn' => 'আইনজীবীর সিভিতে সুস্পষ্টভাবে ঘোষিত চার মূলনীতি, যা প্রতিটি মক্কেল ও বিচারিক বিষয়ে নিষ্ঠার সাথে অনুশীলিত হয়।',
+                        ],
+                    ],
+                    'memberships' => [
+                        'eyebrow' => ['en' => 'Bar & Chamber Affiliations', 'bn' => 'বার ও চেম্বার অন্তর্ভুক্তি'],
+                        'title' => ['en' => 'Professional Bar Memberships', 'bn' => 'পেশাগত বার অ্যাসোসিয়েশন সদস্যপদ'],
+                    ],
+                    'consultation_cta' => [
+                        'eyebrow' => ['en' => 'Chamber Consultation', 'bn' => 'চেম্বার ও কার্যালয়'],
+                        'title' => ['en' => 'Discuss Your Legal Matter', 'bn' => 'আপনার আইনি বিষয়ে পরামর্শ গ্রহণ করুন'],
+                        'description' => [
+                            'en' => 'Share a brief description of your legal concern to request a consultation. The appropriate next steps depend on the facts, available documents, and applicable law.',
+                            'bn' => 'আপনার আইনি সমস্যা ও প্রাসঙ্গিক নথিপত্র জানিয়ে পরামর্শের জন্য যোগাযোগ করুন। প্রতিটি বিষয়ের পরবর্তী পদক্ষেপ সুনির্দিষ্ট ঘটনা, প্রাপ্ত প্রমাণাদি এবং প্রচলিত আইনের ওপর নির্ভর করে।',
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'key' => 'about_highlights',
+                'group' => 'about',
+                'is_public' => true,
+                'value' => [
+                    [
+                        'id' => 'hl-1',
+                        'title' => ['en' => 'University of Chittagong:', 'bn' => 'চট্টগ্রাম বিশ্ববিদ্যালয়:'],
+                        'description' => ['en' => 'First Class honors in both LL.B. (Honours, 2011) and LL.M. (2012).', 'bn' => 'এলএল.বি. (অনার্স) ও এলএল.এম. উভয় ডিগ্রিতে প্রথম শ্রেণি।'],
+                    ],
+                    [
+                        'id' => 'hl-2',
+                        'title' => ['en' => 'Bar Council Enrollment:', 'bn' => 'বার কাউন্সিল তালিকাভুক্তি:'],
+                        'description' => ['en' => 'Statutory qualification and enrollment as an Advocate in 2016.', 'bn' => '২০১৬ সালে সংবিধিবদ্ধ অ্যাডভোকেটশিপ পরীক্ষায় উত্তীর্ণ।'],
+                    ],
+                    [
+                        'id' => 'hl-3',
+                        'title' => ['en' => 'Litigation & Deeds Vetting:', 'bn' => 'আইনি দলিল ও আরজি খসড়া:'],
+                        'description' => ['en' => 'Comprehensive plaint drafting, land title vetting, and commercial contracts.', 'bn' => 'দেওয়ানি ও ফৌজদারি মামলা, ভূমির স্বত্ব দলিল যাচাই ও বাণিজ্যিক চুক্তি।'],
+                    ],
+                    [
+                        'id' => 'hl-4',
+                        'title' => ['en' => 'ADR & Access to Justice:', 'bn' => 'আইনি সহায়তা ও এডিআর:'],
+                        'description' => ['en' => 'Institutional ADR, community legal awareness, and PIL coordination.', 'bn' => 'ব্লাস্ট-এর মাধ্যমে মধ্যস্থতা, সচেতনতা ও জনস্বার্থ আইনি কার্যক্রম।'],
+                    ],
+                ],
+            ],
+            [
+                'key' => 'about_commitments',
+                'group' => 'about',
+                'is_public' => true,
+                'value' => [
+                    [
+                        'id' => 'accessibility',
+                        'pillar' => ['en' => 'Accessibility', 'bn' => 'সহজলভ্যতা'],
+                        'title' => ['en' => 'Clear Communication & Guidance', 'bn' => 'সহজবোধ্য যোগাযোগ ও দিকনির্দেশনা'],
+                        'description' => [
+                            'en' => 'Straightforward orientation on statutory procedures and practical options without confusing jargon, ensuring every litigant understands the realistic trajectory of their matter.',
+                            'bn' => 'জটিল আইনি পরিভাষা পরিহার করে সেবাগ্রহীতাকে তাঁর আইনি অধিকার, আদালতের সম্ভাব্য কার্যপ্রণালী এবং বাস্তবসম্মত পদক্ষেপসমূহ স্পষ্টভাবে অবহিত করা।',
+                        ],
+                        'icon' => 'Compass',
+                    ],
+                    [
+                        'id' => 'availability',
+                        'pillar' => ['en' => 'Availability', 'bn' => 'সময়ানুবর্তিতা'],
+                        'title' => ['en' => 'Disciplined Preparation & Follow-up', 'bn' => 'সময়োপযোগী প্রস্তুতি ও দায়িত্বশীল তদারকি'],
+                        'description' => [
+                            'en' => 'Conscientious scheduling and steady case tracking. Diligent preparation of court pleadings ahead of critical procedural deadlines and scheduled hearing dates.',
+                            'bn' => 'নিয়মানুবর্তিতা ও সময়োপযোগী আইনি পদক্ষেপ। আদালতের ধার্য তারিখে মামলার নথিপত্র যথাযথভাবে প্রস্তুত রাখা এবং শুনানির পূর্বে পর্যাপ্ত প্রস্তুতি নিশ্চিতকরণ।',
+                        ],
+                        'icon' => 'Clock',
+                    ],
+                    [
+                        'id' => 'confidentiality',
+                        'pillar' => ['en' => 'Confidentiality', 'bn' => 'গোপনীয়তা'],
+                        'title' => ['en' => 'Safeguarding Sensitive Records', 'bn' => 'পেশাগত বিশ্বস্ততা ও নথিপত্রের নিরাপত্তা'],
+                        'description' => [
+                            'en' => 'Strict protection of client disclosures, property title deeds, commercial records, and strategic deliberations in full compliance with legal professional ethics.',
+                            'bn' => 'মক্কেলের ব্যক্তিগত তথ্য, আর্থিক বিবরণী, ভূমির মূল দলিলপত্র এবং মামলার কৌশলগত আলোচনার সর্বোচ্চ গোপনীয়তা ও পেশাগত বিশ্বস্ততা রক্ষা।',
+                        ],
+                        'icon' => 'Lock',
+                    ],
+                    [
+                        'id' => 'integrity',
+                        'pillar' => ['en' => 'Integrity', 'bn' => 'পেশাগত সততা'],
+                        'title' => ['en' => 'Principled & Honest Advocacy', 'bn' => 'নীতিবান মূল্যায়ন ও সততা'],
+                        'description' => [
+                            'en' => 'Fidelity to truth, accurate factual marshalling in court documents, and objective assessments without exaggerated assurances or misleading promises.',
+                            'bn' => 'আইনি নীতিশাস্ত্রের কঠোর অনুসরণ, আরজি ও জবাবে নির্ভুল তথ্য উপস্থাপন এবং কোনো অতিরঞ্জিত আশ্বাস না দিয়ে সততা ও আইনের শাসনের প্রতি অবিচল থাকা।',
+                        ],
+                        'icon' => 'ShieldCheck',
+                    ],
+                ],
+            ],
+            [
+                'key' => 'about_trainings',
+                'group' => 'about',
+                'is_public' => true,
+                'value' => [
+                    [
+                        'id' => 'tr-1',
+                        'year' => '2016',
+                        'duration' => ['en' => '3 Days', 'bn' => '৩ দিন'],
+                        'title' => [
+                            'en' => 'Professional Skill Development Workshop for Young Lawyers',
+                            'bn' => 'তরুণ আইনজীবীদের পেশাগত দক্ষতা উন্নয়ন কর্মশালা',
+                        ],
+                        'institution' => [
+                            'en' => "Chittagong District Bar Association — Chittagong Judge's Court",
+                            'bn' => 'চট্টগ্রাম জেলা বার অ্যাসোসিয়েশন — চট্টগ্রাম জজ কোর্ট',
+                        ],
+                        'description' => [
+                            'en' => 'Comprehensive workshop on trial advocacy, witness examination techniques, procedural management, and courtroom decorum.',
+                            'bn' => 'আদালতের কার্যপ্রণালী, সাক্ষ্য গ্রহণ পদ্ধতি, শুনানির শিষ্টাচার ও পেশাগত দক্ষতার ওপর ৩ দিনব্যাপী নিবিড় প্রশিক্ষণ।',
+                        ],
+                    ],
+                    [
+                        'id' => 'tr-2',
+                        'year' => '2015',
+                        'duration' => ['en' => 'Day Long', 'bn' => 'দিনব্যাপী'],
+                        'title' => [
+                            'en' => 'Workshop on Prosecution Under Overseas Employment & Migration Law 2013',
+                            'bn' => 'বৈদেশিক কর্মসংস্থান ও অভিবাসী আইন ২০১৩ বিষয়ক বিশেষায়িত কর্মশালা',
+                        ],
+                        'institution' => [
+                            'en' => 'RMMRU (Refugee and Migratory Movements Research Unit) & Manusher Jonno Foundation, Dhaka',
+                            'bn' => 'রামরু (রিফিউজি অ্যান্ড মাইগ্রেটরি মুভমেন্টস রিসার্চ ইউনিট) ও মানুষের জন্য ফাউন্ডেশন, ঢাকা',
+                        ],
+                        'description' => [
+                            'en' => 'Specialized training on the Overseas Employment and Migrants Act 2013, refugee protection concepts, and statutory prosecution remedies.',
+                            'bn' => 'বৈদেশিক কর্মসংস্থান আইন ২০১৩, অভিবাসী শ্রমিকদের অধিকার সুরক্ষা এবং সংশ্লিষ্ট অপরাধের বিচার প্রক্রিয়া ও আইনি প্রতিকার।',
+                        ],
+                    ],
+                    [
+                        'id' => 'tr-3',
+                        'year' => '2012',
+                        'duration' => ['en' => '13–15 Sept 2012', 'bn' => '১৩–১৫ সেপ্টেম্বর ২০১২'],
+                        'title' => [
+                            'en' => '8th Henry Dunant Memorial Moot Court Competition (Genocide & War Crimes)',
+                            'bn' => '৮ম হেনরি ডুনান্ট মেমোরিয়াল মুট কোর্ট প্রতিযোগিতা (যুদ্ধাপরাধ ও আন্তর্জাতিক আইন)',
+                        ],
+                        'institution' => [
+                            'en' => 'International Committee of the Red Cross (ICRC) & Faculty of Law, University of Dhaka',
+                            'bn' => 'আইসিআরসি এবং আইন অনুষদ, ঢাকা বিশ্ববিদ্যালয়',
+                        ],
+                        'description' => [
+                            'en' => 'National moot court competition at Nawab Ali Chowdhury Senate Bhaban, University of Dhaka, addressing genocide, war crimes jurisprudence, and appellate oral arguments.',
+                            'bn' => 'ঢাকা বিশ্ববিদ্যালয় সিনেট ভবনে অনুষ্ঠিত জাতীয় মুট কোর্ট প্রতিযোগিতা; আন্তর্জাতিক মানবিক আইন, যুদ্ধাপরাধ এবং আপিল বিভাগীয় মৌখিক যুক্তি উপস্থাপন।',
+                        ],
+                    ],
+                    [
+                        'id' => 'tr-4',
+                        'year' => '2012',
+                        'duration' => ['en' => '1 Year Research', 'bn' => '১ বছর মেয়াদী গবেষণা'],
+                        'title' => [
+                            'en' => 'Comparative Study of Village Courts — Research & Field Inquiry',
+                            'bn' => 'গ্রাম আদালতের ক্ষমতা ও কার্যাবলির তুলনামূলক গবেষণা',
+                        ],
+                        'institution' => [
+                            'en' => 'University of Chittagong, Noakhali Field Study',
+                            'bn' => 'চট্টগ্রাম বিশ্ববিদ্যালয় — নোয়াখালী মাঠপর্যায়ের গবেষণা',
+                        ],
+                        'description' => [
+                            'en' => 'Year-long socio-legal research analyzing statutory village court powers, functions, dispute settlement dynamics, and practical challenges at the grassroots.',
+                            'bn' => 'স্থানীয় পর্যায়ে বিরোধ নিষ্পত্তি, আইনি এখতিয়ার এবং গ্রাম আদালত ব্যবস্থার প্রায়োগিক সীমাবদ্ধতা ও সম্ভাবনার বছরব্যাপী মাঠপর্যায়ের বিশ্লেষণ।',
+                        ],
+                    ],
+                    [
+                        'id' => 'tr-5',
+                        'year' => '2011',
+                        'duration' => ['en' => 'Day Long', 'bn' => 'দিনব্যাপী'],
+                        'title' => [
+                            'en' => 'Human Resources Development Workshop',
+                            'bn' => 'মানবসম্পদ উন্নয়ন ও প্রাতিষ্ঠানিক নেতৃত্ব কর্মশালা',
+                        ],
+                        'institution' => [
+                            'en' => 'Rotaract Club of Chittagong University',
+                            'bn' => 'রোটার‍্যাক্ট ক্লাব অব চিটাগং ইউনিভার্সিটি',
+                        ],
+                        'description' => [
+                            'en' => 'Workshop covering human resources management principles, organizational communication ethics, and professional collaboration.',
+                            'bn' => 'প্রাতিষ্ঠানিক যোগাযোগ, দলীয় নেতৃত্ব ও মানবসম্পদ ব্যবস্থাপনার মৌলিক নীতিমালা বিষয়ক দিনব্যাপী প্রশিক্ষণ।',
+                        ],
+                    ],
+                ],
+            ],
+            [
+                'key' => 'about_cta',
+                'group' => 'about',
+                'is_public' => true,
+                'value' => [
+                    'chamber_label_supreme_court' => ['en' => 'Supreme Court Chambers', 'bn' => 'সুপ্রিম কোর্ট চেম্বার'],
+                    'chamber_label_office' => ['en' => 'Principal Office', 'bn' => 'প্রধান কার্যালয়'],
+                    'button_label' => ['en' => 'Schedule Consultation', 'bn' => 'পরামর্শের অনুরোধ জানান'],
+                    'button_url' => '/contact',
+                    'disclaimer' => [
+                        'en' => 'Regulatory Notice: Submitting a consultation inquiry through this platform does not create an automatic advocate-client relationship. Formal representation commences only upon mutual consent and direct chamber engagement.',
+                        'bn' => 'আইনি সতর্কবার্তা: এই ওয়েবসাইটের মাধ্যমে প্রাথমিক যোগাযোগের অনুরোধ কোনো আইনজীবী-মক্কেল সম্পর্ক স্থাপন করে না। আনুষ্ঠানিক সাক্ষাৎ ও সম্মতির মাধ্যমেই কেবল দায়িত্ব গ্রহণ করা হয়।',
+                    ],
+                ],
+            ],
+        ];
+
+        foreach ($aboutSettings as $setting) {
+            SiteSetting::updateOrCreate(
+                ['key' => $setting['key']],
+                [
+                    'group' => $setting['group'],
+                    'is_public' => $setting['is_public'],
+                    'value' => $setting['value'],
+                ]
+            );
         }
 
         // Flush all CMS caches to ensure immediate consistency

@@ -69,6 +69,7 @@ class UpdateProfileRequest extends FormRequest
             'seo.robots' => ['nullable', 'string', 'max:100'],
             'seo.schema_type' => ['nullable', 'string', 'max:100'],
             'seo.structured_data' => ['nullable', 'array'],
+            'about_settings' => ['nullable', 'array'],
         ];
     }
 

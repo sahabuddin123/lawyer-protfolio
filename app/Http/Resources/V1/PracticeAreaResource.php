@@ -45,6 +45,7 @@ class PracticeAreaResource extends BaseApiResource
             'slug' => $this->slug,
             'title' => $this->resolveTranslation($this->title),
             'short_description' => $this->resolveTranslation($this->short_description),
+            'areas_of_assistance' => $this->areas_of_assistance,
             'icon_name' => $this->icon_name,
             'featured_image' => $this->relationLoaded('featuredImage') && $this->featuredImage ? new MediaResource($this->featuredImage) : null,
             'is_featured' => (bool) $this->is_featured,

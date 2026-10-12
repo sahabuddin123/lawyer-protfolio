@@ -247,6 +247,12 @@ class CmsCacheService
         return "cms:contact:config:{$locale}";
     }
 
+    public static function footerKey(string $locale): string
+    {
+        $v = static::version('footer');
+        return "cms:footer:public:v{$v}:{$locale}";
+    }
+
     public static function sitemapKey(): string
     {
         return 'cms:sitemap:xml';
@@ -459,6 +465,13 @@ class CmsCacheService
         Cache::forget(static::sitemapKey());
     }
 
+    public static function forgetFooter(): void
+    {
+        Cache::forget(static::footerKey('en'));
+        Cache::forget(static::footerKey('bn'));
+        static::bumpVersion('footer');
+    }
+
     public static function flushAll(): void
     {
         static::forgetSettings();
@@ -474,6 +487,7 @@ class CmsCacheService
         static::forgetVideos();
         static::forgetGallery();
         static::forgetContactConfig();
+        static::forgetFooter();
         static::forgetSitemap();
     }
 }

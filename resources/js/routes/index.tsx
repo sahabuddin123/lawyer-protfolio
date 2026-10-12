@@ -113,6 +113,9 @@ const NavigationManager = lazy(() =>
 const HomepageManager = lazy(() =>
   import('@/features/cms').then((m) => ({ default: m.HomepageManager }))
 );
+const FooterBuilderPage = lazy(() =>
+  import('@/features/footer-builder').then((m) => ({ default: m.FooterBuilderPage }))
+);
 const RedirectsManager = lazy(() =>
   import('@/features/cms').then((m) => ({ default: m.RedirectsManager }))
 );
@@ -206,6 +209,10 @@ export const router = createBrowserRouter([
       {
         path: 'homepage',
         element: withAdminSuspense(HomepageManager),
+      },
+      {
+        path: 'footer-builder',
+        element: withAdminSuspense(FooterBuilderPage, true),
       },
       {
         path: 'redirects',

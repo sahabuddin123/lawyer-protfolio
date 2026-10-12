@@ -22,6 +22,7 @@ import {
   ChevronDown,
   ChevronRight,
   Users,
+  LayoutTemplate,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useTranslation } from '@/i18n';
@@ -79,6 +80,13 @@ const NAVIGATION_GROUPS: NavGroup[] = [
         path: '/admin/homepage',
         icon: Layers,
         permission: 'manage_homepage',
+      },
+      {
+        nameEn: 'Footer Builder',
+        nameBn: 'ফুটার বিল্ডার',
+        path: '/admin/footer-builder',
+        icon: LayoutTemplate,
+        permission: ['manage_settings', 'manage_homepage'],
       },
       {
         nameEn: 'Pages',
