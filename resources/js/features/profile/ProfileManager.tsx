@@ -1121,7 +1121,7 @@ export const ProfileManager: React.FC = () => {
                   label: 'Section 4: Practice Areas Overview',
                   hasDesc: true,
                   defaultEyebrow: { en: 'Areas of Legal Practice', bn: 'আইনি অনুশীলনের ক্ষেত্রসমূহ' },
-                  defaultTitle: { en: 'Categorized Legal Practice Disciplines', bn: 'সিভিতে বর্ণিত অভিজ্ঞতার বিষয়ভিত্তিক আইনি ক্ষেত্র' },
+                  defaultTitle: { en: 'Categorized Legal Practice Disciplines', bn: 'অভিজ্ঞতার বিষয়ভিত্তিক আইনি ক্ষেত্র' },
                 },
                 {
                   id: 'education',

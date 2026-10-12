@@ -64,14 +64,17 @@ class Media extends Model
 
     public function getUrlAttribute(): string
     {
-        $path = $this->directory . '/' . $this->filename;
+        $cleanDir = $this->directory ? trim($this->directory, '/') : '';
+        $path = $cleanDir !== '' ? ($cleanDir . '/' . ltrim($this->filename, '/')) : ltrim($this->filename, '/');
+
         if ($this->disk === 'public') {
             $url = Storage::disk('public')->url($path);
             $parsedPath = parse_url($url, PHP_URL_PATH);
-            return $parsedPath ?: ('/storage/' . $path);
+            $finalPath = $parsedPath ?: ('/storage/' . $path);
+            return '/' . ltrim($finalPath, '/');
         }
 
-        return $path;
+        return '/' . ltrim($path, '/');
     }
 
     public function getVariantUrl(string $variant): ?string

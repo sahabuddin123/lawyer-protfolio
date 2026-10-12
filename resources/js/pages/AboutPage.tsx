@@ -45,6 +45,7 @@ export const AboutPage: React.FC = () => {
   const [practiceAreas, setPracticeAreas] = useState<PracticeArea[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [portraitImageFailed, setPortraitImageFailed] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -509,7 +510,7 @@ export const AboutPage: React.FC = () => {
 
   const practiceHeader = getHeader('practice_areas', {
     eyebrow: { en: 'Areas of Legal Practice', bn: 'আইনি অনুশীলনের ক্ষেত্রসমূহ' },
-    title: { en: 'Categorized Legal Practice Disciplines', bn: 'সিভিতে বর্ণিত অভিজ্ঞতার বিষয়ভিত্তিক আইনি ক্ষেত্র' },
+    title: { en: 'Categorized Legal Practice Disciplines', bn: 'অভিজ্ঞতার বিষয়ভিত্তিক আইনি ক্ষেত্র' },
     description: {
       en: 'A structured overview of legal experience documented in the CV across litigation, real property vetting, commercial contracts, and dispute resolution.',
       bn: 'দেওয়ানি ও ফৌজদারি মামলা, ভূমির স্বত্ব যাচাই ও দলিলপত্র, ব্যাংকিং বিরোধ, করপোরেট চুক্তি এবং বিকল্প বিরোধ নিষ্পত্তির সমন্বিত রূপরেখা।',
@@ -596,37 +597,8 @@ export const AboutPage: React.FC = () => {
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
             {/* Left Column: Authority, Hero Heading & Copy */}
             <div className="lg:col-span-7">
-              {/* Eyebrows & Authoritative Badges */}
-              <div className="flex flex-wrap items-center gap-2.5">
-                <Badge
-                  variant="gold"
-                  size="md"
-                  icon={<Scale className="h-3.5 w-3.5 shrink-0" />}
-                >
-                  {resolveText(profile.title)}
-                </Badge>
-                {profile.bar_council_enrollment && (
-                  <Badge
-                    variant="outline"
-                    size="md"
-                    icon={<ShieldCheck className="h-3.5 w-3.5 text-legal-gold-400 shrink-0" />}
-                  >
-                    {profile.bar_council_enrollment}
-                  </Badge>
-                )}
-                <Badge
-                  variant="outline"
-                  size="md"
-                  className="hidden sm:inline-flex"
-                  icon={<GraduationCap className="h-3.5 w-3.5 text-legal-gold-400 shrink-0" />}
-                >
-                  {resolveText(heroSettings?.eyebrow_badge) ||
-                    (locale === 'bn' ? 'এলএল.বি. (অনার্স) ও এলএল.এম. (প্রথম শ্রেণি)' : 'LL.B. (Hons) & LL.M. (First Class)')}
-                </Badge>
-              </div>
-
               {/* Advocate Name */}
-              <h1 className="mt-6 font-serif text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+              <h1 className="font-serif text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
                 {resolveText(profile.name)}
               </h1>
 
@@ -698,25 +670,45 @@ export const AboutPage: React.FC = () => {
               <div className="relative mx-auto max-w-md">
                 <div className="absolute -inset-2 rounded-xl bg-gradient-to-tr from-legal-gold-600/30 via-transparent to-legal-gold-500/20 blur-sm" />
                 <div className="relative overflow-hidden rounded-lg border border-legal-gold-500/40 bg-legal-slate-900 shadow-2xl">
-                  {profile.court_robes_photo?.url || profile.profile_photo?.url ? (
-                    <img
-                      src={profile.court_robes_photo?.url || profile.profile_photo?.url}
-                      alt={resolveText(profile.name)}
-                      className="h-auto w-full object-cover transition duration-300"
-                    />
-                  ) : (
-                    <div className="flex h-96 flex-col items-center justify-center bg-gradient-to-b from-legal-slate-800 to-legal-slate-900 p-8 text-center">
-                      <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-legal-gold-500/60 bg-legal-midnight">
-                        <Scale className="h-12 w-12 text-legal-gold-400" />
+                  {(() => {
+                    const candidateUrl =
+                      profile.court_robes_photo?.variants?.large ||
+                      profile.court_robes_photo?.variants?.medium ||
+                      profile.court_robes_photo?.url ||
+                      profile.profile_photo?.variants?.large ||
+                      profile.profile_photo?.variants?.medium ||
+                      profile.profile_photo?.url ||
+                      '/images/lawyer-court-robes.jpg';
+
+                    const normalizedUrl = candidateUrl
+                      ? candidateUrl.replace(/^\/\/+/, '/')
+                      : null;
+
+                    if (normalizedUrl && !portraitImageFailed) {
+                      return (
+                        <img
+                          src={normalizedUrl}
+                          alt={resolveText(profile.name)}
+                          onError={() => setPortraitImageFailed(true)}
+                          className="h-auto w-full aspect-[3/4] object-cover object-top transition duration-300"
+                        />
+                      );
+                    }
+
+                    return (
+                      <div className="flex h-96 flex-col items-center justify-center bg-gradient-to-b from-legal-slate-800 to-legal-slate-900 p-8 text-center">
+                        <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-legal-gold-500/60 bg-legal-midnight">
+                          <Scale className="h-12 w-12 text-legal-gold-400" />
+                        </div>
+                        <h3 className="mt-6 font-serif text-2xl font-bold text-white">
+                          {resolveText(profile.name)}
+                        </h3>
+                        <p className="mt-1 text-sm text-legal-gold-400">
+                          {resolveText(profile.title)}
+                        </p>
                       </div>
-                      <h3 className="mt-6 font-serif text-2xl font-bold text-white">
-                        {resolveText(profile.name)}
-                      </h3>
-                      <p className="mt-1 text-sm text-legal-gold-400">
-                        {resolveText(profile.title)}
-                      </p>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Bar Council Certification Badge */}
                   <div className="border-t border-legal-slate-800 bg-legal-slate-950/80 p-4 text-center">

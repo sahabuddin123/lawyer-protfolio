@@ -530,7 +530,7 @@ class ProfileAndCredentialsSeeder extends Seeder
                     ],
                     'practice_areas' => [
                         'eyebrow' => ['en' => 'Areas of Legal Practice', 'bn' => 'আইনি অনুশীলনের ক্ষেত্রসমূহ'],
-                        'title' => ['en' => 'Categorized Legal Practice Disciplines', 'bn' => 'সিভিতে বর্ণিত অভিজ্ঞতার বিষয়ভিত্তিক আইনি ক্ষেত্র'],
+                        'title' => ['en' => 'Categorized Legal Practice Disciplines', 'bn' => 'অভিজ্ঞতার বিষয়ভিত্তিক আইনি ক্ষেত্র'],
                         'description' => [
                             'en' => 'A structured overview of legal experience documented in the CV across litigation, real property vetting, commercial contracts, and dispute resolution.',
                             'bn' => 'দেওয়ানি ও ফৌজদারি মামলা, ভূমির স্বত্ব যাচাই ও দলিলপত্র, ব্যাংকিং বিরোধ, করপোরেট চুক্তি এবং বিকল্প বিরোধ নিষ্পত্তির সমন্বিত রূপরেখা।',
