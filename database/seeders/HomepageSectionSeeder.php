@@ -287,11 +287,18 @@ class HomepageSectionSeeder extends Seeder
         ];
 
         foreach ($sections as $sec) {
-            // Strictly idempotent: only create if section does not already exist
-            HomepageSection::firstOrCreate(
-                ['section_key' => $sec['section_key']],
-                $sec
-            );
+            $section = HomepageSection::where('section_key', $sec['section_key'])->first();
+            if ($section) {
+                $section->title = $sec['title'];
+                $section->subtitle = $sec['subtitle'];
+                $section->content = $sec['content'];
+                if (isset($sec['settings'])) {
+                    $section->settings = array_merge($section->settings ?? [], $sec['settings']);
+                }
+                $section->save();
+            } else {
+                HomepageSection::create($sec);
+            }
         }
 
         // Ensure SiteSetting global_cta is also synchronized idempotently
