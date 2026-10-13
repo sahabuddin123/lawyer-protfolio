@@ -133,7 +133,7 @@ export const AlbumDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 py-16 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 text-slate-100 pt-32 pb-16 flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-sm text-slate-400">Loading gallery album...</p>
@@ -144,7 +144,7 @@ export const AlbumDetailPage: React.FC = () => {
 
   if (error || !album) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 py-20">
+      <div className="min-h-screen bg-slate-950 text-slate-100 pt-32 pb-20">
         <SeoHead
           title={locale === 'bn' ? 'অ্যালবাম পাওয়া যায়নি | চেম্বার' : 'Album Not Available | Chambers'}
           robots="noindex, nofollow"
@@ -174,7 +174,7 @@ export const AlbumDetailPage: React.FC = () => {
     lightboxIndex !== null && album.images ? album.images[lightboxIndex] : null;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-10">
+    <div className="min-h-screen bg-slate-950 text-slate-100 pt-28 sm:pt-32 pb-16">
       <SeoHead
         title={`${album.title} | ${locale === 'bn' ? 'আলোকচিত্র সংগ্রহ | অ্যাডভোকেট নিজাম উদ্দিন (হক)' : 'Judicial Gallery | Advocate Nijam Uddin (Haq)'}`}
         description={album.description || (locale === 'bn' ? `${album.title} অ্যালবামের আলোকচিত্র সংগ্রহ।` : `Official photograph archive: ${album.title}.`)}

@@ -129,8 +129,8 @@ export const Hero: React.FC<HeroProps> = ({
               {/* Gold Rim Frame & Background Glow */}
               <div className="relative rounded-2xl overflow-hidden border border-amber-500/40 bg-slate-900 shadow-2xl group">
                 <LazyImage
-                  src={portraitUrl || '/images/portrait-nijamuddin.jpg'}
-                  fallbackSrc="/images/portrait-nijamuddin.jpg"
+                  src={portraitUrl || '/images/portrait-nijamuddin-600w.webp'}
+                  fallbackSrc="/images/portrait-nijamuddin.webp"
                   alt={portraitAlt}
                   aspectRatio="3/4"
                   objectPosition={portraitObjectPosition}

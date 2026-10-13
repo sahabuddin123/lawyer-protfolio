@@ -64,7 +64,7 @@ export const CourtroomDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background-base text-text-primary py-24">
+      <div className="min-h-screen bg-background-base text-text-primary pt-32 pb-24">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 animate-pulse">
           <div className="w-48 h-4 bg-surface-elevated rounded mb-8" />
           <div className="w-3/4 h-12 bg-surface-elevated rounded mb-6" />
@@ -85,7 +85,7 @@ export const CourtroomDetailPage: React.FC = () => {
 
   if (error || !experience) {
     return (
-      <div className="min-h-screen bg-background-base text-text-primary py-24 flex items-center justify-center">
+      <div className="min-h-screen bg-background-base text-text-primary pt-32 pb-24 flex items-center justify-center">
         <SeoHead
           title={locale === 'bn' ? 'মামলা খুঁজে পাওয়া যায়নি | চেম্বার' : 'Record Not Found | Chambers'}
           robots="noindex, nofollow"
@@ -120,7 +120,7 @@ export const CourtroomDetailPage: React.FC = () => {
   const practiceAreaTitle = experience.practice_area ? resolveText(experience.practice_area.title) : null;
 
   return (
-    <div className="min-h-screen bg-background-base text-text-primary pb-32">
+    <div className="min-h-screen bg-background-base text-text-primary pt-24 sm:pt-28 pb-32">
       <SeoHead
         title={`${title} | ${locale === 'bn' ? 'কোর্টরুম অভিজ্ঞতা | অ্যাডভোকেট নিজাম উদ্দিন (হক)' : 'Courtroom Experience | Advocate Nijam Uddin (Haq)'}`}
         description={summary || (locale === 'bn' ? `${title} মামলার বিবরণ ও আইনি যুক্তিতর্ক।` : `Judicial litigation proceedings and legal arguments in ${title}.`)}

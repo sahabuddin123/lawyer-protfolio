@@ -44,7 +44,7 @@ export const AboutPreviewSection: React.FC<AboutPreviewSectionProps> = ({
     about.court_robes_photo?.url ||
     about.avatar?.variants?.medium ||
     about.avatar?.url ||
-    '/images/lawyer-chamber-library.jpg';
+    '/images/lawyer-court-robes-600w.webp';
 
   const actionLabel =
     resolveLocalized(sectionConfig?.settings?.cta_label, locale) ||

@@ -156,7 +156,7 @@ export const PublicationsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#07090e] text-neutral-100 py-16">
+    <div className="min-h-screen bg-[#07090e] text-neutral-100 pb-24">
       <SeoHead
         title={
           locale === 'bn'

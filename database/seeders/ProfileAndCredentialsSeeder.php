@@ -47,9 +47,10 @@ class ProfileAndCredentialsSeeder extends Seeder
                     'bn' => 'সুপ্রিম কোর্ট তালিকাভুক্ত আইনজীবী প্রতিকৃতি',
                 ],
                 'variants' => [
-                    'thumbnail' => '/images/lawyer-court-robes.jpg',
-                    'medium' => '/images/lawyer-court-robes.jpg',
-                    'large' => '/images/lawyer-court-robes.jpg',
+                    'thumbnail' => '/images/lawyer-court-robes-600w.webp',
+                    'medium' => '/images/lawyer-court-robes-600w.webp',
+                    'large' => '/images/lawyer-court-robes.webp',
+                    'fallback' => '/images/lawyer-court-robes.jpg',
                 ],
                 'uploaded_by' => $uploadedBy,
             ]
@@ -76,9 +77,10 @@ class ProfileAndCredentialsSeeder extends Seeder
                     'bn' => 'অ্যাডভোকেট নিজাম উদ্দিন (হক), বাংলাদেশ সুপ্রিম কোর্ট',
                 ],
                 'variants' => [
-                    'thumbnail' => '/images/lawyer-executive.jpg',
-                    'medium' => '/images/lawyer-executive.jpg',
-                    'large' => '/images/lawyer-executive.jpg',
+                    'thumbnail' => '/images/lawyer-executive-600w.webp',
+                    'medium' => '/images/lawyer-executive-600w.webp',
+                    'large' => '/images/lawyer-executive.webp',
+                    'fallback' => '/images/lawyer-executive.jpg',
                 ],
                 'uploaded_by' => $uploadedBy,
             ]

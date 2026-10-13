@@ -63,7 +63,7 @@ export const MediaDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-neutral-100 py-20">
+      <div className="min-h-screen bg-black text-neutral-100 pt-32 pb-20">
         <div className="max-w-4xl mx-auto px-4 space-y-6 animate-pulse">
           <div className="h-4 w-32 bg-neutral-800 rounded" />
           <div className="h-10 w-3/4 bg-neutral-800 rounded" />
@@ -76,7 +76,7 @@ export const MediaDetailPage: React.FC = () => {
 
   if (error || !item) {
     return (
-      <div className="min-h-screen bg-black text-neutral-100 py-20">
+      <div className="min-h-screen bg-black text-neutral-100 pt-32 pb-20">
         <SeoHead
           title={locale === 'bn' ? 'মিডিয়া রেকর্ড খুঁজে পাওয়া যায়নি | চেম্বার' : 'Media Record Not Found | Chambers'}
           robots="noindex, nofollow"
@@ -128,7 +128,7 @@ export const MediaDetailPage: React.FC = () => {
         }}
       />
       {/* Editorial Top Hero Bar */}
-      <div className="border-b border-neutral-800/80 bg-neutral-950/60 py-8">
+      <div className="border-b border-neutral-800/80 bg-neutral-950/60 pt-24 sm:pt-28 pb-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between text-xs text-neutral-400 mb-6">
             <button

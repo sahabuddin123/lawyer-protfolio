@@ -79,7 +79,7 @@ export const JudgmentDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-judicial-bg text-white py-24 flex items-center justify-center">
+      <div className="min-h-screen bg-judicial-bg text-white pt-32 pb-24 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gold mb-4" />
           <p className="text-gray-400 font-serif">
@@ -92,7 +92,7 @@ export const JudgmentDetailPage: React.FC = () => {
 
   if (error || !judgment) {
     return (
-      <div className="min-h-screen bg-judicial-bg text-white py-24">
+      <div className="min-h-screen bg-judicial-bg text-white pt-32 pb-24">
         <SeoHead
           title={locale === 'bn' ? 'নথি পাওয়া যায়নি | চেম্বার' : 'Judgment Review Not Found | Chambers'}
           robots="noindex, nofollow"
@@ -124,7 +124,7 @@ export const JudgmentDetailPage: React.FC = () => {
   const authorName = resolveText(judgment.author);
 
   return (
-    <article className="min-h-screen bg-judicial-bg text-white pb-32">
+    <article className="min-h-screen bg-judicial-bg text-white pt-24 sm:pt-28 pb-32">
       <SeoHead
         title={`${caseName} | ${locale === 'bn' ? 'রায় ও পর্যালোচনা | অ্যাডভোকেট নিজাম উদ্দিন (হক)' : 'Judgment Review | Advocate Nijam Uddin (Haq)'}`}
         description={summary || (locale === 'bn' ? `${caseName} মামলার রায় পর্যালোচনা ও আইনি বিশ্লেষণ।` : `Authoritative review and legal analysis of ${caseName}.`)}

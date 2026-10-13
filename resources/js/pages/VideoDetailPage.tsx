@@ -72,7 +72,7 @@ export const VideoDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-neutral-100 py-16">
+      <div className="min-h-screen bg-black text-neutral-100 pt-32 pb-16">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 space-y-6">
           <div className="w-32 h-6 bg-neutral-900 rounded animate-pulse" />
           <div className="aspect-video bg-neutral-900 rounded-xl animate-pulse" />
@@ -85,7 +85,7 @@ export const VideoDetailPage: React.FC = () => {
 
   if (error || !video) {
     return (
-      <div className="min-h-screen bg-black text-neutral-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-black text-neutral-100 flex items-center justify-center p-4 pt-32 pb-16">
         <SeoHead
           title={locale === 'bn' ? 'ভিডিও পাওয়া যায়নি | চেম্বার' : 'Broadcast Unavailable | Chambers'}
           robots="noindex, nofollow"
@@ -118,7 +118,7 @@ export const VideoDetailPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-neutral-100 pb-24">
+    <div className="min-h-screen bg-black text-neutral-100 pt-24 sm:pt-28 pb-24">
       <SeoHead
         title={`${video.title} | ${locale === 'bn' ? 'ভিডিও আর্কাইভ | অ্যাডভোকেট নিজাম উদ্দিন (হক)' : 'Legal Video | Advocate Nijam Uddin (Haq)'}`}
         description={video.description || (locale === 'bn' ? `${video.title} — আইনি আলোচনা ও ভিডিও সম্প্রচার।` : `Televised legal discussion and judicial commentary: ${video.title}.`)}

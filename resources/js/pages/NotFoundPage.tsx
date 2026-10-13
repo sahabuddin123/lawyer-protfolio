@@ -11,7 +11,7 @@ export const NotFoundPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-[75vh] flex items-center justify-center py-20 bg-background-primary text-text-primary">
+    <div className="min-h-[75vh] flex items-center justify-center pt-32 pb-20 bg-background-primary text-text-primary">
       <SeoHead
         title={locale === 'bn' ? 'পৃষ্ঠাটি পাওয়া যায়নি (৪০৪)' : 'Page Not Found (404)'}
         description={locale === 'bn' ? 'অনুরোধকৃত আইনি রেকর্ড বা পৃষ্ঠাটি পাওয়া যায়নি।' : 'The requested judicial record or page could not be located.'}

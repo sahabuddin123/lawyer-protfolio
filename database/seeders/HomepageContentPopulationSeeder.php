@@ -541,9 +541,10 @@ class HomepageContentPopulationSeeder extends Seeder
                     'bn' => 'সুপ্রিম কোর্ট চেম্বার লাইব্রেরিতে গবেষণারত',
                 ],
                 'variants' => [
-                    'thumbnail' => '/storage/lawyer/lawyer-chamber-library.jpg',
-                    'medium' => '/storage/lawyer/lawyer-chamber-library.jpg',
-                    'large' => '/storage/lawyer/lawyer-chamber-library.jpg',
+                    'thumbnail' => '/storage/lawyer/lawyer-chamber-library-600w.webp',
+                    'medium' => '/storage/lawyer/lawyer-chamber-library-600w.webp',
+                    'large' => '/storage/lawyer/lawyer-chamber-library.webp',
+                    'fallback' => '/storage/lawyer/lawyer-chamber-library.jpg',
                 ],
                 'uploaded_by' => $userId,
             ]
@@ -571,9 +572,10 @@ class HomepageContentPopulationSeeder extends Seeder
                     'bn' => 'সুপ্রিম কোর্ট চেম্বার পরামর্শ টেবিল',
                 ],
                 'variants' => [
-                    'thumbnail' => '/storage/lawyer/lawyer-chamber-desk.jpg',
-                    'medium' => '/storage/lawyer/lawyer-chamber-desk.jpg',
-                    'large' => '/storage/lawyer/lawyer-chamber-desk.jpg',
+                    'thumbnail' => '/storage/lawyer/lawyer-chamber-desk-600w.webp',
+                    'medium' => '/storage/lawyer/lawyer-chamber-desk-600w.webp',
+                    'large' => '/storage/lawyer/lawyer-chamber-desk.webp',
+                    'fallback' => '/storage/lawyer/lawyer-chamber-desk.jpg',
                 ],
                 'uploaded_by' => $userId,
             ]
@@ -601,9 +603,10 @@ class HomepageContentPopulationSeeder extends Seeder
                     'bn' => 'এডভোকেট নিজাম উদ্দিন (হক), বাংলাদেশ সুপ্রিম কোর্ট',
                 ],
                 'variants' => [
-                    'thumbnail' => '/storage/lawyer/lawyer-executive.jpg',
-                    'medium' => '/storage/lawyer/lawyer-executive.jpg',
-                    'large' => '/storage/lawyer/lawyer-executive.jpg',
+                    'thumbnail' => '/storage/lawyer/lawyer-executive-600w.webp',
+                    'medium' => '/storage/lawyer/lawyer-executive-600w.webp',
+                    'large' => '/storage/lawyer/lawyer-executive.webp',
+                    'fallback' => '/storage/lawyer/lawyer-executive.jpg',
                 ],
                 'uploaded_by' => $userId,
             ]

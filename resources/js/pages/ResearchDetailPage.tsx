@@ -75,7 +75,7 @@ export const ResearchDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background-base text-text-primary py-24">
+      <div className="min-h-screen bg-background-base text-text-primary pt-32 pb-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 animate-pulse space-y-6">
           <div className="w-36 h-4 bg-surface-elevated rounded" />
           <div className="w-3/4 h-10 bg-surface-elevated rounded" />
@@ -96,7 +96,7 @@ export const ResearchDetailPage: React.FC = () => {
 
   if (error || !research) {
     return (
-      <div className="min-h-screen bg-background-base text-text-primary py-24 flex items-center justify-center">
+      <div className="min-h-screen bg-background-base text-text-primary pt-32 pb-24 flex items-center justify-center">
         <SeoHead
           title={locale === 'bn' ? 'গবেষণা পাওয়া যায়নি | চেম্বার' : 'Monograph Not Found | Chambers'}
           robots="noindex, nofollow"
@@ -135,7 +135,7 @@ export const ResearchDetailPage: React.FC = () => {
     : null;
 
   return (
-    <article className="min-h-screen bg-background-base text-text-primary pb-24">
+    <article className="min-h-screen bg-background-base text-text-primary pt-24 sm:pt-28 pb-24">
       <SeoHead
         title={`${title} | ${locale === 'bn' ? 'আইনি গবেষণা | অ্যাডভোকেট নিজাম উদ্দিন (হক)' : 'Legal Research | Advocate Nijam Uddin (Haq)'}`}
         description={excerpt || (locale === 'bn' ? `${title} — আইনি গবেষণা ও বিশ্লেষণমূলক নিবন্ধ।` : `Legal research monograph and statutory analysis on ${title}.`)}

@@ -73,7 +73,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     hero?.court_robes_photo?.url ||
     hero?.avatar?.variants?.large ||
     hero?.avatar?.url ||
-    '/images/portrait-nijamuddin.jpg';
+    '/images/portrait-nijamuddin-600w.webp';
 
   // Badges from verified data
   const credentialsBadge =

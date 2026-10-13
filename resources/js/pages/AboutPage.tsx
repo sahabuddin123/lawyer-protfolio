@@ -427,7 +427,7 @@ export const AboutPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-legal-midnight py-24 text-legal-slate-200">
+      <div className="min-h-screen bg-legal-midnight pt-32 pb-24 text-legal-slate-200">
         <Container>
           <div className="flex flex-col items-center justify-center space-y-4 py-32 text-center">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-legal-gold-500 border-t-transparent" />
@@ -442,7 +442,7 @@ export const AboutPage: React.FC = () => {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-legal-midnight py-24 text-legal-slate-200">
+      <div className="min-h-screen bg-legal-midnight pt-32 pb-24 text-legal-slate-200">
         <Container>
           <div className="mx-auto max-w-xl rounded-lg border border-red-900/40 bg-red-950/20 p-8 text-center">
             <h2 className="font-serif text-2xl font-bold text-red-400">
@@ -589,14 +589,14 @@ export const AboutPage: React.FC = () => {
       />
 
       {/* SECTION 1: Professional Hero */}
-      <section className="relative overflow-hidden border-b border-legal-slate-800/80 bg-gradient-to-b from-legal-slate-900 via-legal-midnight to-legal-midnight py-16 lg:py-24">
+      <section className="relative overflow-hidden border-b border-legal-slate-800/80 bg-gradient-to-b from-legal-slate-900 via-legal-midnight to-legal-midnight pt-28 sm:pt-32 pb-16 lg:pt-36 lg:pb-24">
         <div className="pointer-events-none absolute -right-48 -top-48 h-96 w-96 rounded-full bg-legal-gold-500/5 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-48 -left-48 h-96 w-96 rounded-full bg-legal-slate-800/40 blur-3xl" />
 
         <Container>
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
-            {/* Left Column: Authority, Hero Heading & Copy */}
-            <div className="lg:col-span-7">
+          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-16">
+            {/* Left Column: Authority, Hero Heading & Copy (Mobile: Order 2, Desktop: Order 1) */}
+            <div className="lg:col-span-7 order-2 lg:order-1">
               {/* Advocate Name */}
               <h1 className="font-serif text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
                 {resolveText(profile.name)}
@@ -665,8 +665,8 @@ export const AboutPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Column: Profile Presentation Portrait */}
-            <div className="lg:col-span-5">
+            {/* Right Column: Profile Presentation Portrait (Mobile: Order 1, Desktop: Order 2) */}
+            <div className="lg:col-span-5 order-1 lg:order-2">
               <div className="relative mx-auto max-w-md">
                 <div className="absolute -inset-2 rounded-xl bg-gradient-to-tr from-legal-gold-600/30 via-transparent to-legal-gold-500/20 blur-sm" />
                 <div className="relative overflow-hidden rounded-lg border border-legal-gold-500/40 bg-legal-slate-900 shadow-2xl">
@@ -678,7 +678,7 @@ export const AboutPage: React.FC = () => {
                       profile.profile_photo?.variants?.large ||
                       profile.profile_photo?.variants?.medium ||
                       profile.profile_photo?.url ||
-                      '/images/lawyer-court-robes.jpg';
+                      '/images/lawyer-court-robes-600w.webp';
 
                     const normalizedUrl = candidateUrl
                       ? candidateUrl.replace(/^\/\/+/, '/')
@@ -689,6 +689,10 @@ export const AboutPage: React.FC = () => {
                         <img
                           src={normalizedUrl}
                           alt={resolveText(profile.name)}
+                          width={600}
+                          height={800}
+                          loading="lazy"
+                          decoding="async"
                           onError={() => setPortraitImageFailed(true)}
                           className="h-auto w-full aspect-[3/4] object-cover object-top transition duration-300"
                         />

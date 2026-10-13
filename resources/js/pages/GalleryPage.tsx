@@ -101,7 +101,7 @@ export const GalleryPage: React.FC = () => {
   const standardAlbums = albums.filter((a) => a.id !== featuredAlbum?.id);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-12">
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-24">
       <SeoHead
         title={
           locale === 'bn'

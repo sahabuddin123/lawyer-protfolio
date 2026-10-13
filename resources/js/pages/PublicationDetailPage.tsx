@@ -91,7 +91,7 @@ export const PublicationDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#07090e] text-white py-24 flex items-center justify-center">
+      <div className="min-h-screen bg-[#07090e] text-white pt-32 pb-24 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-2 border-legal-gold border-t-transparent mb-4" />
           <p className="text-neutral-400 font-serif">
@@ -104,7 +104,7 @@ export const PublicationDetailPage: React.FC = () => {
 
   if (error || !publication) {
     return (
-      <div className="min-h-screen bg-[#07090e] text-white py-24">
+      <div className="min-h-screen bg-[#07090e] text-white pt-32 pb-24">
         <SeoHead
           title={locale === 'bn' ? 'প্রকাশনা পাওয়া যায়নি | চেম্বার' : 'Publication Not Found | Chambers'}
           robots="noindex, nofollow"
@@ -143,7 +143,7 @@ export const PublicationDetailPage: React.FC = () => {
   };
 
   return (
-    <article className="min-h-screen bg-[#07090e] text-neutral-100 py-16">
+    <article className="min-h-screen bg-[#07090e] text-neutral-100 pt-28 sm:pt-32 pb-16">
       <SeoHead
         title={`${title} | ${locale === 'bn' ? 'আইনি প্রকাশনা | অ্যাডভোকেট নিজাম উদ্দিন (হক)' : 'Publications | Advocate Nijam Uddin (Haq)'}`}
         description={excerpt || (locale === 'bn' ? `${title} — আইনি প্রকাশনা ও গবেষণাপত্র।` : `Published legal treatise and commentary on ${title}.`)}
